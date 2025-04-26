@@ -562,12 +562,7 @@ public class SignInGUI
         }
         return set;
     }
-    
-    /**
-     * Return other buttons.
-     * @param player 
-     * @return 
-     */
+
     public static Set<SignInGUIColumn> getOthers(Player player) {
         SignInDate today = SignInDate.getInstance(new Date());
         return getOthers(player, today.getMonth(), today.getYear());
@@ -579,7 +574,7 @@ public class SignInGUI
     }
     
     public static Set<SignInGUIColumn> getOthers(Player player, int month, int year) {
-        Set<SignInGUIColumn> set = new HashSet();
+        Set<SignInGUIColumn> set = new HashSet<>();
         Storage playerdata = Storage.getPlayer(player);
         String queue = String.valueOf(SignInQueue.getInstance().getRank(playerdata.getUserUUID()));
         String continuous = String.valueOf(playerdata.getContinuousSignIn());
@@ -590,30 +585,30 @@ public class SignInGUI
         int nextPageYear = getNextPageYear(month, year);
         int previousPageMonth = getPreviousPageMonth(month);
         int previousPageYear = getPreviousPageYear(month, year);
-        if (section != null) {
-            section.getKeys(false).stream().forEach(items -> {
-                ItemStack other;
-                try {
-                    if (section.get(items + ".Data") != null) {
-                        other = new ItemStack(Material.valueOf(section.getString(items + ".Item").toUpperCase()), 1, (short) section.getInt(items + ".Data"));
-                    } else {
-                        other = new ItemStack(Material.valueOf(section.getString(items + ".Item").toUpperCase()), 1);
-                    }
-                } catch (IllegalArgumentException ex) {
-                    other = new ItemStack(Material.BARRIER);
+        if (section != null) for (String items : section.getKeys(false)) {
+            ItemStack other;
+            try {
+                if (section.get(items + ".Data") != null) {
+                    other = new ItemStack(Material.valueOf(section.getString(items + ".Item", "").toUpperCase()), 1, (short) section.getInt(items + ".Data"));
+                } else {
+                    other = new ItemStack(Material.valueOf(section.getString(items + ".Item", "").toUpperCase()), 1);
                 }
-                if (section.get(items + ".Head-Owner") != null) {
-                    PluginControl.setHead(other, replace(player, section.getString(items + ".Head-Owner"), "{player}", player.getName()));
-                }
-                if (section.get(items + ".Head-Textures") != null) {
-                    setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + items + ".Head-Textures", other);
-                }
-                if (section.get(items + ".Custom-Model-Data") != null) {
-                    setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + items + ".Custom-Model-Data", other);
-                }
-                ItemMeta im = other.getItemMeta();
+            } catch (IllegalArgumentException ex) {
+                other = new ItemStack(Material.BARRIER);
+            }
+            if (section.get(items + ".Head-Owner") != null) {
+                PluginControl.setHead(other, replace(player, section.getString(items + ".Head-Owner"), "{player}", player.getName()));
+            }
+            if (section.get(items + ".Head-Textures") != null) {
+                setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + items + ".Head-Textures", other);
+            }
+            if (section.get(items + ".Custom-Model-Data") != null) {
+                setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + items + ".Custom-Model-Data", other);
+            }
+            ItemMeta im = other.getItemMeta();
+            if (im != null) {
                 if (section.get(items + ".Lore") != null) {
-                    List<String> lore = new ArrayList();
+                    List<String> lore = new ArrayList<>();
                     Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                     placeholders.put("{continuous}", continuous);
                     placeholders.put("{queue}", queue);
@@ -625,27 +620,28 @@ public class SignInGUI
                     placeholders.put("{nextPageYear}", String.valueOf(nextPageYear));
                     placeholders.put("{previousPageMonth}", String.valueOf(previousPageMonth));
                     placeholders.put("{previousPageYear}", String.valueOf(previousPageYear));
-                    section.getStringList(items + ".Lore").stream().forEach(lores -> {
-                        lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                    });
+                    for (String loreLine : section.getStringList(items + ".Lore")) {
+                        lore.add(MessageUtil.replacePlaceholders(player, loreLine, placeholders));
+                    }
                     im.setLore(lore);
                 }
                 if (section.get(items + ".Enchantment") != null) {
                     setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + items + ".Enchantment", im);
                 }
                 if (section.get(items + ".Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                if (section.get(items + ".Display-Name") != null) im.setDisplayName(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(section.getString(items + ".Display-Name"), player)));
-                other.setItemMeta(im);
-                other.setAmount(section.get(items + ".Amount") != null ? section.getInt(items + ".Amount") : 1);
-                if (section.get(items + ".Slots") != null) {
-                    for (int slot : section.getIntegerList(items + ".Slots")) {
-                        set.add(new SignInGUIColumn(other, slot, items));
-                    }
+                if (section.get(items + ".Display-Name") != null)
+                    im.setDisplayName(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(section.getString(items + ".Display-Name"), player)));
+            }
+            other.setItemMeta(im);
+            other.setAmount(section.get(items + ".Amount") != null ? section.getInt(items + ".Amount") : 1);
+            if (section.get(items + ".Slots") != null) {
+                for (int slot : section.getIntegerList(items + ".Slots")) {
+                    set.add(new SignInGUIColumn(other, slot, items));
                 }
-                if (section.get(items + ".Slot") != null) {
-                    set.add(new SignInGUIColumn(other, section.getInt(items + ".Slot"), items));
-                }
-            });
+            }
+            if (section.get(items + ".Slot") != null) {
+                set.add(new SignInGUIColumn(other, section.getInt(items + ".Slot"), items));
+            }
         }
         return set;
     }
@@ -719,7 +715,7 @@ public class SignInGUI
                 for (Enchantment enchant : Enchantment.values()) {
                     if (enchant.getName().equalsIgnoreCase(data[0])) {
                         try {
-                            im.addEnchant(enchant, Integer.valueOf(data[1]), true);
+                            im.addEnchant(enchant, Integer.parseInt(data[1]), true);
                             invalid = false;
                             break;
                         } catch (Exception ex) {

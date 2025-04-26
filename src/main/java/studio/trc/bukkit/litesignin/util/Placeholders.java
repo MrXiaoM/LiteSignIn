@@ -8,6 +8,8 @@ import java.util.UUID;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 
+import org.jetbrains.annotations.NotNull;
+import studio.trc.bukkit.litesignin.Main;
 import studio.trc.bukkit.litesignin.api.Storage;
 import studio.trc.bukkit.litesignin.config.ConfigurationType;
 import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
@@ -19,25 +21,30 @@ public class Placeholders
     extends PlaceholderExpansion
 {
     private final Random random = new Random();
+    private final Main plugin;
     
-    private static final Placeholders instance = new Placeholders();
-    private static final Map<UUID, Map<String, String>> cacheOfPlayers = new HashMap();
-    private static final Map<String, String> cacheOfServer = new HashMap();
+    private static Placeholders instance;
+    private static final Map<UUID, Map<String, String>> cacheOfPlayers = new HashMap<>();
     
     private static long cacheOfUpdateTime = System.currentTimeMillis();
-    
-    public Placeholders() {
-        super();
+
+    public Placeholders(Main plugin) {
+        this.plugin = plugin;
+        instance = this;
     }
-    
-    public static Placeholders getInstance() {
-        return instance;
+
+    public static void init(Main plugin) {
+        if (instance == null) {
+            instance = new Placeholders(plugin);
+        }
+        if (!instance.isRegistered()) {
+            instance.register();
+        }
     }
-    
+
     public static void checkUpdate() {
         if (cacheOfUpdateTime < System.currentTimeMillis()) {
             cacheOfPlayers.clear();
-            cacheOfServer.clear();
             cacheOfUpdateTime = System.currentTimeMillis() + (long) (ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getDouble("PlaceholderAPI.Cache-Update-Delay") * 1000);
         }
     }
@@ -46,20 +53,20 @@ public class Placeholders
     public String onPlaceholderRequest(Player player, String identifier) {
         checkUpdate();
         String lowerIdentifier = identifier.toLowerCase();
-        boolean cache = !ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getStringList("PlaceholderAPI.Exceptions").stream().anyMatch(placeholder -> placeholder.equals(lowerIdentifier));
+        boolean cache = ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getStringList("PlaceholderAPI.Exceptions").stream().noneMatch(placeholder -> placeholder.equals(lowerIdentifier));
         if (identifier.toLowerCase().startsWith("random")) {
             String[] randomValue = identifier.split("_");
             if (randomValue.length < 3) {
                 return "0";
             }
             try {
-                int number1 = Integer.valueOf(randomValue[1]);
-                int number2 = Integer.valueOf(randomValue[2]);
+                int number1 = Integer.parseInt(randomValue[1]);
+                int number2 = Integer.parseInt(randomValue[2]);
                 if (number1 == number2) {
                     return String.valueOf(number1);
                 } else if (number1 > number2) {
                     return String.valueOf(this.random.nextInt(number1 - number2 + 1) + number2);
-                } else if (number2 > number1) {
+                } else /*if (number2 > number1)*/ {
                     return String.valueOf(this.random.nextInt(number2 - number1 + 1) + number1);
                 }
             } catch (NumberFormatException ex) {
@@ -68,12 +75,10 @@ public class Placeholders
         }
         if (player != null) {
             UUID uuid = player.getUniqueId();
-            if (cacheOfPlayers.get(uuid) == null) {
-                cacheOfPlayers.put(uuid, new HashMap());
-            }
-            if (cacheOfPlayers.get(uuid).get(identifier) != null) {
-                return cacheOfPlayers.get(uuid).get(identifier);
-            }
+            Map<String, String> map = cacheOfPlayers.computeIfAbsent(uuid, k -> new HashMap<>());
+            String value = map.get(identifier);
+            if (value != null) return value;
+
             String result = "";
             Storage data = Storage.getPlayer(player);
             Map<String, String> cacheMap = cacheOfPlayers.get(uuid);
@@ -94,8 +99,10 @@ public class Placeholders
                 } else {
                     String[] time = identifier.split("_");
                     try {
-                        result = String.valueOf(data.getCumulativeNumberOfMonth(Integer.valueOf(time[3]), Integer.valueOf(time[4])));
-                    } catch (Throwable t) {}
+                        int year = Integer.parseInt(time[3]);
+                        int month = Integer.parseInt(time[4]);
+                        result = String.valueOf(data.getCumulativeNumberOfMonth(year, month));
+                    } catch (Throwable ignored) {}
                 }
             } else if (identifier.equalsIgnoreCase("continuous")) {
                 result = String.valueOf(data.getContinuousSignIn());
@@ -123,22 +130,20 @@ public class Placeholders
     }
 
     @Override
-    public String getPlugin() {
-        return "LiteSignIn";
-    }
-
-    @Override
+    @NotNull
     public String getIdentifier() {
-        return "litesignin";
+        return plugin.getDescription().getName().toLowerCase();
     }
 
     @Override
+    @NotNull
     public String getAuthor() {
-        return "TRCStudioDean";
+        return String.join(", ", plugin.getDescription().getAuthors());
     }
 
     @Override
+    @NotNull
     public String getVersion() {
-        return "1.0.0";
+        return plugin.getDescription().getVersion();
     }
 }

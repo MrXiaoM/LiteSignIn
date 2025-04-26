@@ -1,11 +1,6 @@
 package studio.trc.bukkit.litesignin.util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,8 +24,8 @@ import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
 
 public class MessageUtil
 {
-    private static final Map<String, String> defaultPlaceholders = new HashMap();
-    private static final Map<String, BaseComponent> defaultJsonComponents = new HashMap();
+    private static final Map<String, String> defaultPlaceholders = new HashMap<>();
+    private static final Map<String, BaseComponent> defaultJsonComponents = new HashMap<>();
     private static final Pattern hexColorPattern = Pattern.compile("#[a-fA-F0-9]{6}");
     
     @Getter
@@ -86,9 +81,9 @@ public class MessageUtil
      * @param messages String messages.
      */
     public static void sendMessage(CommandSender sender, List<String> messages) {
-        messages.stream().forEach(rawMessage -> {
+        for (String rawMessage : messages) {
             sendMessage(sender, rawMessage);
-        });
+        }
     }
     
     /**
@@ -98,9 +93,9 @@ public class MessageUtil
      * @param placeholders String placeholders.
      */
     public static void sendMessage(CommandSender sender, List<String> messages, Map<String, String> placeholders) {
-        messages.stream().forEach(rawMessage -> {
+        for (String rawMessage : messages) {
             sendMessage(sender, rawMessage, placeholders);
-        });
+        }
     }
     
     /**
@@ -111,9 +106,9 @@ public class MessageUtil
      * @param jsonComponents JSON messages.
      */
     public static void sendMessage(CommandSender sender, List<String> messages, Map<String, String> placeholders, Map<String, BaseComponent> jsonComponents) {
-        messages.stream().forEach(rawMessage -> {
+        for (String rawMessage : messages) {
             sendMessage(sender, rawMessage, placeholders, jsonComponents);
-        });
+        }
     }
     
     /**
@@ -170,9 +165,9 @@ public class MessageUtil
              }
         } else {
             StringBuilder builder = new StringBuilder();
-            components.stream().map(component -> component.toPlainText()).forEach(message -> {
-                builder.append(message);
-            });
+            for (BaseComponent component : components) {
+                builder.append(component.toPlainText());
+            }
             sender.sendMessage(builder.toString());
         }
     }
@@ -211,19 +206,18 @@ public class MessageUtil
      * Replace all placeholders to the corresponding text.
      * @param message Target text.
      * @param placeholders Placeholders.
-     * @return 
      */
     public static String replacePlaceholders(String message, Map<String, String> placeholders) {
         if (message == null) return null;
-        List<TextParagraph> splitedTexts = splitIntoParagraphs(message, placeholders);
+        List<TextParagraph> splitTexts = splitIntoParagraphs(message, placeholders);
         StringBuilder string = new StringBuilder();
-        splitedTexts.stream().forEach(paragraph -> {
+        for (TextParagraph paragraph : splitTexts) {
             if (paragraph.isPlaceholder()) {
                 string.append(paragraph.getText());
             } else {
                 string.append(message.substring(paragraph.startsWith, paragraph.endsWith).replace("/n", "\n"));
             }
-        });
+        }
         return toColor(string.toString());
     }
     
@@ -232,19 +226,18 @@ public class MessageUtil
      * @param sender Use for hook PlaceholderAPI
      * @param message Target text.
      * @param placeholders Placeholders.
-     * @return 
      */
     public static String replacePlaceholders(CommandSender sender, String message, Map<String, String> placeholders) {
         if (message == null) return null;
-        List<TextParagraph> splitedTexts = splitIntoParagraphs(message, placeholders);
+        List<TextParagraph> splitTexts = splitIntoParagraphs(message, placeholders);
         StringBuilder string = new StringBuilder();
-        splitedTexts.stream().forEach(paragraph -> {
+        for (TextParagraph paragraph : splitTexts) {
             if (paragraph.isPlaceholder()) {
                 string.append(paragraph.getText());
             } else {
                 string.append(toPlaceholderAPIResult(message.substring(paragraph.startsWith, paragraph.endsWith), sender).replace("/n", "\n"));
             }
-        });
+        }
         return toColor(string.toString());
     }
     
@@ -253,27 +246,28 @@ public class MessageUtil
      * @param sender Use for hook PlaceholderAPI
      * @param message Target text.
      * @param baseComponents Json components placeholders.
-     * @return 
      */
     public static List<BaseComponent> createJsonMessage(CommandSender sender, String message, Map<String, BaseComponent> baseComponents) {
-        List<TextParagraph> splitedTexts = splitIntoComponentParagraphs(message, baseComponents);
-        List<BaseComponent> components = new LinkedList();
-        splitedTexts.stream().forEach(paragraph -> {
+        List<TextParagraph> splitTexts = splitIntoComponentParagraphs(message, baseComponents);
+        List<BaseComponent> components = new LinkedList<>();
+        for (TextParagraph paragraph : splitTexts) {
             if (paragraph.isPlaceholder()) {
                 components.add(paragraph.getComponent());
             } else {
                 components.add(new TextComponent(toColor(toPlaceholderAPIResult(message.substring(paragraph.startsWith, paragraph.endsWith), sender).replace("/n", "\n"))));
             }
-        });
+        }
         return components;
     }
     
     public static List<TextParagraph> splitIntoParagraphs(String message, Map<String, String> placeholders) {
-        List<TextParagraph> splitedTexts = new LinkedList();
-        splitedTexts.add(new TextParagraph(0, message.length(), message));
-        placeholders.keySet().stream().filter(placeholder -> placeholder != null).map(placeholder -> {
-            List<TextParagraph> newArray = new ArrayList();
-            splitedTexts.stream().forEach(textParagraphs -> {
+        List<TextParagraph> splitTexts = new LinkedList<>();
+        List<TextParagraph> result = new LinkedList<>();
+        splitTexts.add(new TextParagraph(0, message.length(), message));
+        for (String placeholder : placeholders.keySet()) {
+            if (placeholder == null) continue;
+            List<TextParagraph> newArray = new ArrayList<>();
+            for (TextParagraph textParagraphs : splitTexts) {
                 String message_lowerCase = textParagraphs.getText().toLowerCase();
                 String placeholder_lowerCase = placeholder.toLowerCase();
                 if (message_lowerCase.contains(placeholder_lowerCase)) {
@@ -295,18 +289,16 @@ public class MessageUtil
                 } else {
                     newArray.add(textParagraphs);
                 }
-            });
-            return newArray;
-        }).forEach(newArray -> {
-            splitedTexts.clear();
-            splitedTexts.addAll(newArray);
-        });
-        return splitedTexts;
+            }
+            result.clear();
+            result.addAll(newArray);
+        }
+        return result;
     }
     
     /**
      * Split placeholders at text into paragraphs.
-     * 
+     * <br>
      * Example: 
      *     Text: "This plugin was completed in {year}/{month}/{day}."
      *     Placeholders: "{year}"="2019", "{month}"="11", "{day}"="15"
@@ -315,14 +307,15 @@ public class MessageUtil
      * 
      * @param message Target text.
      * @param baseComponents JSON components.
-     * @return 
      */
     public static List<TextParagraph> splitIntoComponentParagraphs(String message, Map<String, BaseComponent> baseComponents) {
-        List<TextParagraph> splitedTexts = new LinkedList();
-        splitedTexts.add(new TextParagraph(0, message.length(), new TextComponent(message)));
-        baseComponents.keySet().stream().filter(placeholder -> placeholder != null).map(placeholder -> {
-            List<TextParagraph> newArray = new ArrayList();
-            splitedTexts.stream().forEach(textParagraphs -> {
+        List<TextParagraph> splitTexts = new LinkedList<>();
+        List<TextParagraph> result = new LinkedList<>();
+        splitTexts.add(new TextParagraph(0, message.length(), new TextComponent(message)));
+        for (String placeholder : baseComponents.keySet()) {
+            if (placeholder == null) continue;
+            List<TextParagraph> newArray = new ArrayList<>();
+            for (TextParagraph textParagraphs : splitTexts) {
                 String message_lowerCase = textParagraphs.getComponent().toPlainText().toLowerCase();
                 String placeholder_lowerCase = placeholder.toLowerCase();
                 if (message_lowerCase.contains(placeholder_lowerCase)) {
@@ -344,13 +337,11 @@ public class MessageUtil
                 } else {
                     newArray.add(textParagraphs);
                 }
-            });
-            return newArray;
-        }).forEach(newArray -> {
-            splitedTexts.clear();
-            splitedTexts.addAll(newArray);
-        });
-        return splitedTexts;
+            }
+            result.clear();
+            result.addAll(newArray);
+        }
+        return result;
     }
     
     public static String escape(String text) {
@@ -384,13 +375,13 @@ public class MessageUtil
                     text = text.replace(color, net.md_5.bungee.api.ChatColor.of(color).toString());
                     matcher = hexColorPattern.matcher(text);
                 }
-            } catch (Throwable t) {}
+            } catch (Throwable ignored) {}
         }
         return ChatColor.translateAlternateColorCodes('&', text);
     }
     
     public static String prefix(String text) {
-        return replacePlaceholders(Bukkit.getConsoleSender(), text, new HashMap());
+        return replacePlaceholders(Bukkit.getConsoleSender(), text, new HashMap<>());
     }
     
     public static List<String> getMessageList(String path) {
@@ -398,17 +389,17 @@ public class MessageUtil
     }
     
     public static Map<String, String> getDefaultPlaceholders() {
-        return new HashMap(defaultPlaceholders);
+        return new HashMap<>(defaultPlaceholders);
     }
     
     public static Map<String, BaseComponent> getDefaultComponents() {
-        return new HashMap(defaultJsonComponents);
+        return new HashMap<>(defaultJsonComponents);
     }
     
     /**
      * Plugin langauge
      */
-    public static enum Language {
+    public enum Language {
         
         /**
          * Simplified Chinese

@@ -1,10 +1,8 @@
 package studio.trc.bukkit.litesignin.util.woodsignscript;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +15,13 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import studio.trc.bukkit.litesignin.Main;
 import studio.trc.bukkit.litesignin.config.PreparedConfiguration;
 import studio.trc.bukkit.litesignin.config.ConfigurationType;
 import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
@@ -33,8 +33,8 @@ import studio.trc.bukkit.litesignin.util.SignInPluginProperties;
 
 public class WoodSignUtil
 {
-    private static final List<WoodSign> scripts = new ArrayList();
-    private static final Map<Location, WoodSign> scriptedSigns = new HashMap();
+    private static final List<WoodSign> scripts = new ArrayList<>();
+    private static final Map<Location, WoodSign> scriptedSigns = new HashMap<>();
     private static final FileConfiguration database = new YamlConfiguration();
     
     public static void loadSigns() {
@@ -45,15 +45,17 @@ public class WoodSignUtil
         } catch (IOException ex) {
             Logger.getLogger(WoodSignUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
-        try (Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) {
+        try (InputStream fis = Files.newInputStream(file.toPath());
+             Reader reader = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
             database.load(reader);
         } catch (IOException | InvalidConfigurationException ex) {
             Logger.getLogger(WoodSignUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (database.get("Database") != null) {
-            for (String sections : database.getConfigurationSection("Database").getKeys(false)) {
+            ConfigurationSection section = database.getConfigurationSection("Database");
+            if (section != null) for (String sections : section.getKeys(false)) {
                 try {
-                    World world = Bukkit.getWorld(database.getString("Database." + sections + ".Location.World"));
+                    World world = Bukkit.getWorld(database.getString("Database." + sections + ".Location.World", ""));
                     if (world == null) {
                         database.set("Database." + sections, null);
                         saveScriptedSigns();
@@ -78,9 +80,8 @@ public class WoodSignUtil
         scripts.clear();
         ConfigurationUtil.reloadConfig(ConfigurationType.WOOD_SIGN_SETTINGS);
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.WOOD_SIGN_SETTINGS);
-        config.getConfigurationSection("Wood-Sign-Scripts").getKeys(false).stream().forEach(sections -> {
+        for (String sections : config.getConfigurationSection("Wood-Sign-Scripts").getKeys(false)) {
             try {
-                String woodSignTitle = sections;
                 WoodSignLine woodSignText = WoodSignLine.create()
                         .setLine1(config.getString("Wood-Sign-Scripts." + sections + ".Sign-Text.Line-1"))
                         .setLine2(config.getString("Wood-Sign-Scripts." + sections + ".Sign-Text.Line-2"))
@@ -91,13 +92,13 @@ public class WoodSignUtil
                 if (!config.getBoolean("Wood-Sign-Scripts." + sections + ".Permission.Default")) {
                     permission = config.getString("Wood-Sign-Scripts." + sections + ".Permission.Permission");
                 }
-                scripts.add(new WoodSign(woodSignTitle, woodSignText, woodSignCommand, permission));
+                scripts.add(new WoodSign(sections, woodSignText, woodSignCommand, permission));
             } catch (Exception ex) {
                 Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                 placeholders.put("{signs}", sections);
                 SignInPluginProperties.sendOperationMessage("WoodSignScriptLoadFailed", placeholders);
             }
-        });
+        }
     }
     
     public static WoodSign getWoodSign(String titleText) {
@@ -119,14 +120,11 @@ public class WoodSignUtil
     
     public static void createWoodSignScript(Block block, WoodSign woodSign, boolean reloadFile) {
         int number = 1;
-        while (true) {
-            if (database.get("Database." + number) == null) {
-                break;
-            }
+        while (database.get("Database." + number) != null) {
             number++;
         }
         Location location = block.getLocation();
-        database.set("Database." + number + ".Location.World", location.getWorld().getName());
+        database.set("Database." + number + ".Location.World", block.getWorld().getName());
         database.set("Database." + number + ".Location.X", location.getBlockX());
         database.set("Database." + number + ".Location.Y", location.getBlockY());
         database.set("Database." + number + ".Location.Z", location.getBlockZ());
@@ -144,8 +142,9 @@ public class WoodSignUtil
     }
     
     public static boolean removeWoodSignScript(Location location) {
-        if (database.get("Database") == null || location.getWorld() == null) return false;
-        for (String sections : database.getConfigurationSection("Database").getKeys(false)) {
+        ConfigurationSection section = database.getConfigurationSection("Database");
+        if (section == null || location.getWorld() == null) return false;
+        for (String sections : section.getKeys(false)) {
             if (location.getWorld().getName().equalsIgnoreCase(database.getString("Database." + sections + ".Location.World")) 
                     && location.getBlockX() == database.getInt("Database." + sections + ".Location.X")
                     && location.getBlockY() == database.getInt("Database." + sections + ".Location.Y")
@@ -161,21 +160,20 @@ public class WoodSignUtil
     
     public static void saveScriptedSigns() {
         File file = new File("plugins/LiteSignIn/WoodSignsData.yml");
-        if (!file.exists()) try {
-            file.createNewFile();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
         try {
+            if (!file.exists()) file.createNewFile();
             database.save(file);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Main.getInstance().getLogger().log(Level.WARNING, "保存 WoodSignsData.yml 失败", ex);
         }
     }
     
     public static void scan() {
         int number = 0;
-        number = new ArrayList<>(scriptedSigns.keySet()).stream().filter(location -> location.getBlock() == null || !(location.getBlock().getState() instanceof Sign)).filter(location -> removeWoodSignScript(location)).map(m -> 1).reduce(number, Integer::sum);
+        number = new ArrayList<>(scriptedSigns.keySet()).stream()
+                .filter(location -> !(location.getBlock().getState() instanceof Sign))
+                .filter(WoodSignUtil::removeWoodSignScript).map(m -> 1)
+                .reduce(number, Integer::sum);
         if (number > 0) {
             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
             placeholders.put("{signs}", String.valueOf(number));
@@ -184,8 +182,8 @@ public class WoodSignUtil
     }
     
     public static void clickScript(Player player, WoodSign scriptedSign) {
-        List<SignInRewardCommand> list = new ArrayList();
-        scriptedSign.getWoodSignCommand().stream().forEach(command -> {
+        List<SignInRewardCommand> list = new ArrayList<>();
+        for (String command : scriptedSign.getWoodSignCommand()) {
             if (command.toLowerCase().startsWith("server:")) {
                 list.add(new SignInRewardCommand(SignInRewardCommandType.SERVER, command.substring(7)));
             } else if (command.toLowerCase().startsWith("op:")) {
@@ -193,8 +191,10 @@ public class WoodSignUtil
             } else {
                 list.add(new SignInRewardCommand(SignInRewardCommandType.PLAYER, command));
             }
-        });
-        list.stream().forEach(command -> {command.runWithThePlayer(player);});
+        }
+        for (SignInRewardCommand command : list) {
+            command.runWithThePlayer(player);
+        }
     }
     
     public static class WoodSignLine {

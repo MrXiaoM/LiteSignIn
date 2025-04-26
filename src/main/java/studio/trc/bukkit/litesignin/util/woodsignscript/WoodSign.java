@@ -6,15 +6,12 @@ import lombok.Getter;
 
 import studio.trc.bukkit.litesignin.util.woodsignscript.WoodSignUtil.WoodSignLine;
 
+@Getter
 public class WoodSign
 {
-    @Getter
     private final String woodSignTitle;
-    @Getter
     private final WoodSignLine woodSignText;
-    @Getter
     private final List<String> woodSignCommand;
-    @Getter
     private final String permission;
     
     public WoodSign(String woodSignTitle, WoodSignLine woodSignText, List<String> woodSignCommand, String permission) {

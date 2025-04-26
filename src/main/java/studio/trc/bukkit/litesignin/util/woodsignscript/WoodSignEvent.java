@@ -5,6 +5,7 @@ import java.util.Map;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -25,12 +26,12 @@ public class WoodSignEvent
 {
     @EventHandler(priority = EventPriority.LOWEST)
     public void click(PlayerInteractEvent event) {
-        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
-            if (!PluginControl.enableSignScript() || !(event.getClickedBlock().getState() instanceof Sign) || event.isCancelled()) {
+        Block block = event.getClickedBlock();
+        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && block != null) {
+            if (!PluginControl.enableSignScript() || !(block.getState() instanceof Sign) || event.useInteractedBlock().equals(Event.Result.DENY)) {
                 return;
             }
             Player player = event.getPlayer();
-            Block block = event.getClickedBlock();
             if (WoodSignUtil.getAllScriptedSign().get(block.getLocation()) != null) {
                 WoodSignUtil.clickScript(player, WoodSignUtil.getAllScriptedSign().get(block.getLocation()));
             }
@@ -73,26 +74,29 @@ public class WoodSignEvent
             if (signs.getWoodSignTitle().equalsIgnoreCase(event.getLine(0))) {
                 if (signs.getPermission() != null) {
                     if (player.hasPermission(signs.getPermission())) {
-                        WoodSignUtil.createWoodSignScript(block, signs, true);
-                        Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                        placeholders.put("{sign}", signs.getWoodSignTitle());
-                        MessageUtil.sendMessage(event.getPlayer(), ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Wood-Sign.Successfully-Create", placeholders);
-                        break;
+                        success(block, signs, event.getPlayer());
                     } else {
-                        Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                        placeholders.put("{sign}", signs.getWoodSignTitle());
-                        placeholders.put("{permission}", signs.getPermission());
-                        MessageUtil.sendMessage(event.getPlayer(), ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Wood-Sign.Unable-To-Create", placeholders);
-                        break;
+                        fail(signs, event.getPlayer());
                     }
                 } else {
-                    WoodSignUtil.createWoodSignScript(block, signs, true);
-                    Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                    placeholders.put("{sign}", signs.getWoodSignTitle());
-                    MessageUtil.sendMessage(event.getPlayer(), ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Wood-Sign.Successfully-Create", placeholders);
-                    break;
+                    success(block, signs, event.getPlayer());
                 }
+                break;
             }
         }
+    }
+
+    private void success(Block block, WoodSign signs, Player player) {
+        WoodSignUtil.createWoodSignScript(block, signs, true);
+        Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
+        placeholders.put("{sign}", signs.getWoodSignTitle());
+        MessageUtil.sendMessage(player, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Wood-Sign.Successfully-Create", placeholders);
+    }
+
+    private void fail(WoodSign signs, Player player) {
+        Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
+        placeholders.put("{sign}", signs.getWoodSignTitle());
+        placeholders.put("{permission}", signs.getPermission());
+        MessageUtil.sendMessage(player, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Wood-Sign.Unable-To-Create", placeholders);
     }
 }

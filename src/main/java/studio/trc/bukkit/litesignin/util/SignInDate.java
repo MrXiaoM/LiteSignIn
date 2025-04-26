@@ -8,7 +8,9 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Range;
 
+@SuppressWarnings("MagicConstant")
 public class SignInDate
     implements Serializable
 {
@@ -17,6 +19,7 @@ public class SignInDate
     private int year;
     @Getter
     @Setter
+    @Range(from=1, to=12)
     private int month;
     @Getter
     @Setter
@@ -33,61 +36,43 @@ public class SignInDate
     @Setter
     private boolean timePeriodFound = false;
     
-    public SignInDate(Date d) throws Exception {
-        String[] date = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(d).split("-");
+    public SignInDate(Date d) {
+        String str = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(d);
+        String[] date = str.split("-");
         
-        year = Integer.valueOf(date[0]);
-        if (year < 1970 || year > Calendar.getInstance().get(Calendar.YEAR)) {
-            throw new Exception();
-        }
-        
-        month = Integer.valueOf(date[1]);
-        if (month < 1 || month > 12) {
-            throw new Exception();
-        }
+        year = Integer.parseInt(date[0]);
+        month = Integer.parseInt(date[1]);
+
+        check(year, month, str);
         
         int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
             days[1] = 29;
         }
-        if (Integer.valueOf(date[2]) > days[month - 1]) {
-            day = days[month -1];
-        } else {
-            day = Integer.valueOf(date[2]); 
-        }
+        day = Math.min(Integer.parseInt(date[2]), days[month - 1]);
         
-        hour = Integer.valueOf(date[3]);
-        minute = Integer.valueOf(date[4]);
-        second = Integer.valueOf(date[5]);
+        hour = Integer.parseInt(date[3]);
+        minute = Integer.parseInt(date[4]);
+        second = Integer.parseInt(date[5]);
         timePeriodFound = true;
     }
     
-    public SignInDate(String[] date) throws Exception {
-        year = Integer.valueOf(date[0]);
-        month = Integer.valueOf(date[1]);
-        
-        if (year < 1970 || year > Calendar.getInstance().get(Calendar.YEAR)) {
-            throw new Exception();
-        }
-        
-        if (month < 1 || month > 12) {
-            throw new Exception();
-        }
+    public SignInDate(String[] date) {
+        year = Integer.parseInt(date[0]);
+        month = Integer.parseInt(date[1]);
+
+        check(year, month, String.join("-", date));
         
         int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
             days[1] = 29;
         }
-        if (Integer.valueOf(date[2]) > days[month - 1]) {
-            day = days[month -1];
-        } else {
-            day = Integer.valueOf(date[2]);
-        }
+        day = Math.min(Integer.parseInt(date[2]), days[month - 1]);
         
         if (date.length > 3) {
-            hour = Integer.valueOf(date[3]);
-            minute = Integer.valueOf(date[4]);
-            second = Integer.valueOf(date[5]);
+            hour = Integer.parseInt(date[3]);
+            minute = Integer.parseInt(date[4]);
+            second = Integer.parseInt(date[5]);
             timePeriodFound = true;
         } else {
             hour = 0;
@@ -96,14 +81,8 @@ public class SignInDate
         }
     }
     
-    public SignInDate(int year, int month, int day) throws Exception {
-        if (year < 1970 || year > Calendar.getInstance().get(Calendar.YEAR)) {
-            throw new Exception();
-        }
-        
-        if (month < 1 || month > 12) {
-            throw new Exception();
-        }
+    public SignInDate(int year, int month, int day) {
+        check(year, month, String.format("%d-%d-%d", year, month, day));
         
         int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
@@ -121,14 +100,8 @@ public class SignInDate
         second = 0;
     }
     
-    public SignInDate(int year, int month, int day, int hour, int minute, int second) throws Exception {
-        if (year < 1970 || year > Calendar.getInstance().get(Calendar.YEAR)) {
-            throw new Exception();
-        }
-        
-        if (month < 1 || month > 12) {
-            throw new Exception();
-        }
+    public SignInDate(int year, int month, int day, int hour, int minute, int second) {
+        check(year, month, String.format("%d-%d-%d-%d-%d-%d", year, month, day, hour, minute, second));
         
         int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
@@ -147,38 +120,37 @@ public class SignInDate
         timePeriodFound = true;
     }
     
-    public SignInDate(String datatext) throws Exception {
-        String[] date = datatext.split("-");
-        year = Integer.valueOf(date[0]);
-        month = Integer.valueOf(date[1]);
-        
-        if (year < 1970 || year > Calendar.getInstance().get(Calendar.YEAR)) {
-            throw new Exception();
-        }
-        
-        if (month < 1 || month > 12) {
-            throw new Exception();
-        }
-        
+    public SignInDate(String str) {
+        String[] date = str.split("-");
+        year = Integer.parseInt(date[0]);
+        month = Integer.parseInt(date[1]);
+
+        check(year, month, str);
+
         int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
             days[1] = 29;
         }
-        if (Integer.valueOf(date[2]) > days[month - 1]) {
-            day = days[month -1];
-        } else {
-            day = Integer.valueOf(date[2]);
-        }
+        day = Math.min(Integer.parseInt(date[2]), days[month - 1]);
         
         if (date.length > 3) {
-            hour = Integer.valueOf(date[3]);
-            minute = Integer.valueOf(date[4]);
-            second = Integer.valueOf(date[5]);
+            hour = Integer.parseInt(date[3]);
+            minute = Integer.parseInt(date[4]);
+            second = Integer.parseInt(date[5]);
             timePeriodFound = true;
         } else {
             hour = 0;
             minute = 0;
             second = 0;
+        }
+    }
+
+    private static void check(int year, int month, String str) {
+        if (year < 1970 || year > Calendar.getInstance().get(Calendar.YEAR)) {
+            throw new IllegalArgumentException("invalid year " + year + " from " + str);
+        }
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("invalid month " + month + " from " + str);
         }
     }
     
@@ -231,7 +203,7 @@ public class SignInDate
     public int compareTo(SignInDate date){
         long thisTime = getMillisecond();
         long anotherTime = date.getMillisecond();
-        return thisTime < anotherTime ? -1 : (thisTime == anotherTime ? 0 : 1);
+        return Long.compare(thisTime, anotherTime);
     }
     
     public long getMillisecond() {
@@ -268,9 +240,7 @@ public class SignInDate
     public boolean equals(Object obj) {
         if (obj instanceof SignInDate) {
             SignInDate date = (SignInDate) obj;
-            if (date.getYear() == year && date.getMonth() == month && date.getDay() == day) {
-                return true;
-            }
+            return date.getYear() == year && date.getMonth() == month && date.getDay() == day;
         }
         return false;
     }
@@ -290,70 +260,47 @@ public class SignInDate
     
     public static SignInDate getInstanceAsTimePeriod(String timePeriod) {
         String[] split = timePeriod.split(":");
-        try {
-            SignInDate today = SignInDate.getInstance(new Date());
-            int hour = Integer.valueOf(split[0]);
-            if (hour > 23 || hour < 0) {
-                return null;
-            }
-            int minute = 0;
-            if (split.length >= 2) {
-                minute = Integer.valueOf(split[1]);
-            }
-            if (minute > 59 || minute < 0) {
-                return null;
-            }
-            int second = 0;
-            if (split.length >= 3) {
-                second = Integer.valueOf(split[2]);
-            }
-            if (second > 59 || second < 0) {
-                return null;
-            }
-            return new SignInDate(today.getYear(), today.getMonth(), today.getDay(), hour, minute, second);
-        } catch (Exception ex) {
+
+        SignInDate today = SignInDate.getInstance(new Date());
+        int hour = Integer.parseInt(split[0]);
+        if (hour > 23 || hour < 0) {
             return null;
         }
+        int minute = 0;
+        if (split.length >= 2) {
+            minute = Integer.parseInt(split[1]);
+        }
+        if (minute > 59 || minute < 0) {
+            return null;
+        }
+        int second = 0;
+        if (split.length >= 3) {
+            second = Integer.parseInt(split[2]);
+        }
+        if (second > 59 || second < 0) {
+            return null;
+        }
+        return new SignInDate(today.getYear(), today.getMonth(), today.getDay(), hour, minute, second);
     }
     
     public static SignInDate getInstance(String datatext) {
-        try {
-            return new SignInDate(datatext);
-        } catch (Exception ex) {
-            return null;
-        }
+        return new SignInDate(datatext);
     }
     
     public static SignInDate getInstance(int year, int month, int day, int hour, int minute, int second) {
-        try {
-            return new SignInDate(year, month, day, hour, minute, second);
-        } catch (Exception ex) {
-            return null;
-        }
+        return new SignInDate(year, month, day, hour, minute, second);
     }
     
     public static SignInDate getInstance(int year, int month, int day) {
-        try {
-            return new SignInDate(year, month, day);
-        } catch (Exception ex) {
-            return null;
-        }
+        return new SignInDate(year, month, day);
     }
     
     public static SignInDate getInstance(String[] date) {
-        try {
-            return new SignInDate(date);
-        } catch (Exception ex) {
-            return null;
-        }
+        return new SignInDate(date);
     }
     
     public static SignInDate getInstance(Date date) {
-        try {
-            return new SignInDate(date);
-        } catch (Exception ex) {
-            return null;
-        }
+        return new SignInDate(date);
     }
     
     public static List<SignInDate> sort(List<SignInDate> dates) {

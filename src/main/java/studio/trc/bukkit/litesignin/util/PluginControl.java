@@ -49,9 +49,7 @@ public class PluginControl
             SignInQueue.getInstance().loadQueue();
         }
         try {
-            if (!Placeholders.getInstance().isRegistered()) {
-                Placeholders.getInstance().register();
-            }
+            Placeholders.init(Main.getInstance());
             SignInPluginProperties.sendOperationMessage("FindThePlaceholderAPI", MessageUtil.getDefaultPlaceholders());
         } catch (Error ex) {
             ConfigurationUtil.getConfig(ConfigurationType.CONFIG).set("PlaceholderAPI.Enabled", false);
@@ -75,10 +73,10 @@ public class PluginControl
     
     public static void reloadMySQL() {
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.CONFIG);
-        Map<String, String> jdbcOptions = new HashMap();
-        config.getConfigurationSection("MySQL-Storage.Options").getKeys(false).stream().forEach(option -> {
+        Map<String, String> jdbcOptions = new HashMap<>();
+        for (String option : config.getConfigurationSection("MySQL-Storage.Options").getKeys(false)) {
             jdbcOptions.put(option, config.getString("MySQL-Storage.Options." + option));
-        });
+        }
         if (MySQLEngine.getInstance() != null) {
             MySQLEngine.getInstance().disconnect();
         }
@@ -102,9 +100,9 @@ public class PluginControl
     }
     
     public static void savePlayerData() {
-        YamlStorage.cache.values().stream().forEach(YamlStorage::saveData);
-        MySQLStorage.cache.values().stream().forEach(MySQLStorage::saveData);
-        SQLiteStorage.cache.values().stream().forEach(SQLiteStorage::saveData);
+        YamlStorage.cache.values().forEach(YamlStorage::saveData);
+        MySQLStorage.cache.values().forEach(MySQLStorage::saveData);
+        SQLiteStorage.cache.values().forEach(SQLiteStorage::saveData);
     }
     
     public static void hideEnchants(ItemMeta im) {
@@ -117,29 +115,32 @@ public class PluginControl
     /**
      * Heads' cache data.
      */
-    private static final Map<String, ItemMeta> headCacheData = new HashMap();
+    private static final Map<String, ItemMeta> headCacheData = new HashMap<>();
     
     public static void setHead(ItemStack is, String name) {
-        if (Bukkit.getBukkitVersion().startsWith("1.7") || Bukkit.getBukkitVersion().startsWith("1.8") || Bukkit.getBukkitVersion().startsWith("1.9") || Bukkit.getBukkitVersion().startsWith("1.10") || Bukkit.getBukkitVersion().startsWith("1.11") || Bukkit.getBukkitVersion().startsWith("1.12")) {
-            if (is.getType().equals(Material.valueOf("SKULL_ITEM")) && is.getData().getData() == 3) {
-                if (headCacheData.containsKey(name)) {
-                    is.setItemMeta(headCacheData.get(name));
-                } else {
-                    SkullMeta sm = (SkullMeta) is.getItemMeta();
-                    sm.setOwner(name);
-                    headCacheData.put(name, sm);
-                    is.setItemMeta(sm);
+        ItemMeta im = is.getItemMeta();
+        if (im instanceof SkullMeta) {
+            if (Bukkit.getBukkitVersion().startsWith("1.7") || Bukkit.getBukkitVersion().startsWith("1.8") || Bukkit.getBukkitVersion().startsWith("1.9") || Bukkit.getBukkitVersion().startsWith("1.10") || Bukkit.getBukkitVersion().startsWith("1.11") || Bukkit.getBukkitVersion().startsWith("1.12")) {
+                if (is.getType().equals(Material.valueOf("SKULL_ITEM")) && is.getData().getData() == 3) {
+                    if (headCacheData.containsKey(name)) {
+                        is.setItemMeta(headCacheData.get(name));
+                    } else {
+                        SkullMeta sm = (SkullMeta) im;
+                        sm.setOwner(name);
+                        headCacheData.put(name, sm);
+                        is.setItemMeta(sm);
+                    }
                 }
-            }
-        } else {
-            if (is.getType().equals(Material.PLAYER_HEAD)) {
-                if (headCacheData.containsKey(name)) {
-                    is.setItemMeta(headCacheData.get(name));
-                } else {
-                    SkullMeta sm = (SkullMeta) is.getItemMeta();
-                    sm.setOwningPlayer(Bukkit.getOfflinePlayer(name));
-                    headCacheData.put(name, sm);
-                    is.setItemMeta(sm);
+            } else {
+                if (is.getType().equals(Material.PLAYER_HEAD)) {
+                    if (headCacheData.containsKey(name)) {
+                        is.setItemMeta(headCacheData.get(name));
+                    } else {
+                        SkullMeta sm = (SkullMeta) im;
+                        sm.setOwningPlayer(Bukkit.getOfflinePlayer(name));
+                        headCacheData.put(name, sm);
+                        is.setItemMeta(sm);
+                    }
                 }
             }
         }
@@ -248,27 +249,32 @@ public class PluginControl
                 PluginControl.setHead(is, MessageUtil.replacePlaceholders(player, ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getString("Manual-Settings." + itemName + ".Head-Owner"), placeholders));
             }
             ItemMeta im = is.getItemMeta();
-            if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Lore") != null) {
-                List<String> lore = new ArrayList();
-                for (String lores : ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getStringList("Manual-Settings." + itemName + ".Lore")) {
-                    lore.add(MessageUtil.toPlaceholderAPIResult(MessageUtil.toColor(lores), player));
+            if (im != null) {
+                if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Lore") != null) {
+                    List<String> lore = new ArrayList<>();
+                    for (String lores : ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getStringList("Manual-Settings." + itemName + ".Lore")) {
+                        lore.add(MessageUtil.toPlaceholderAPIResult(MessageUtil.toColor(lores), player));
+                    }
+                    im.setLore(lore);
                 }
-                im.setLore(lore);
-            }
-            if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Enchantment") != null) {
-                for (String name : ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getStringList("Manual-Settings." + itemName + ".Enchantment")) {
-                    String[] data = name.split(":");
-                    for (Enchantment enchant : Enchantment.values()) {
-                        if (enchant.getName().equalsIgnoreCase(data[0])) {
-                            try {
-                                im.addEnchant(enchant, Integer.valueOf(data[1]), true);
-                            } catch (NumberFormatException ex) {}
+                if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Enchantment") != null) {
+                    for (String name : ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getStringList("Manual-Settings." + itemName + ".Enchantment")) {
+                        String[] data = name.split(":");
+                        for (Enchantment enchant : Enchantment.values()) {
+                            if (enchant.getName().equalsIgnoreCase(data[0])) {
+                                try {
+                                    im.addEnchant(enchant, Integer.parseInt(data[1]), true);
+                                } catch (NumberFormatException ignored) {
+                                }
+                            }
                         }
                     }
                 }
+                if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Hide-Enchants") != null)
+                    PluginControl.hideEnchants(im);
+                if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Display-Name") != null)
+                    im.setDisplayName(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getString("Manual-Settings." + itemName + ".Display-Name"), player)));
             }
-            if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Hide-Enchants") != null) PluginControl.hideEnchants(im);
-            if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Manual-Settings." + itemName + ".Display-Name") != null) im.setDisplayName(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).getString("Manual-Settings." + itemName + ".Display-Name"), player)));
             is.setItemMeta(im);
             return is;
         } else if (ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS).get("Item-Collection." + itemName) != null) {
@@ -279,46 +285,35 @@ public class PluginControl
         }
         return null;
     }
-    
-    public static int getRandom(int number1, int number2) {
-        if (number1 == number2) {
-            return number1;
-        } else if (number1 > number2) {
-            return new Random().nextInt(number1 - number2 + 1) + number2;
-        } else if (number2 > number1) {
-            return new Random().nextInt(number2 - number1 + 1) + number1;
-        }
-        return 0;
-    }
-    
+
     public static int getRandom(String placeholder) {
         String[] random = placeholder.split("-");
         try {
-            int number1 = Integer.valueOf(random[0]);
-            int number2 = Integer.valueOf(random[1]);
+            int number1 = Integer.parseInt(random[0]);
+            int number2 = Integer.parseInt(random[1]);
             if (number1 == number2) {
                 return number1;
             } else if (number1 > number2) {
                 return new Random().nextInt(number1 - number2 + 1) + number2;
-            } else if (number2 > number1) {
+            } else /*if (number2 > number1)*/ {
                 return new Random().nextInt(number2 - number1 + 1) + number1;
             }
-        } catch (NumberFormatException ex) {}
+        } catch (NumberFormatException ignored) {}
         return 0;
     }
 
     private static long backupFilesAcquisitionTime = 0;
-    private static List<String> backupFiles = new ArrayList();
+    private static List<String> backupFiles = new ArrayList<>();
     
     public static List<String> getBackupFiles() {
         if (System.currentTimeMillis() - backupFilesAcquisitionTime <= 5000) {
             return backupFiles;
         }
-        List<String> list = new ArrayList();
+        List<String> list = new ArrayList<>();
         File folder = new File(ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getString("Database-Management.Rollback.Backup-Folder-Path"));
         if (!folder.exists()) return list;
         File[] files = folder.listFiles();
-        for (File f : files) {
+        if (files != null) for (File f : files) {
             list.add(f.getName());
         }
         backupFiles = list;

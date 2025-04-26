@@ -16,9 +16,9 @@ import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
 public class OnlineTimeRecord 
 {
     @Getter
-    private static final Map<UUID, Long> joinTimeRecord = new HashMap();
+    private static final Map<UUID, Long> joinTimeRecord = new HashMap<>();
     @Getter
-    private static final Map<UUID, OnlineTimeRecord > onlineTimeRecords = new HashMap();
+    private static final Map<UUID, OnlineTimeRecord > onlineTimeRecords = new HashMap<>();
     
     @Getter
     private final long timeInMillis;
@@ -63,7 +63,7 @@ public class OnlineTimeRecord
         if (config.getBoolean("Online-Duration-Condition.Enabled")) {
             String[] time = config.getString("Online-Duration-Condition.Time").split(":");
             if (time.length == 3 && SignInPluginUtils.isInteger(time[0]) && SignInPluginUtils.isInteger(time[1]) && SignInPluginUtils.isInteger(time[2])) {
-                long requirement = Long.valueOf(time[0]) * 1000 * 60 * 60 + Long.valueOf(time[1]) * 1000 * 60 + Long.valueOf(time[2]) * 1000;
+                long requirement = Long.parseLong(time[0]) * 1000 * 60 * 60 + Long.parseLong(time[1]) * 1000 * 60 + Long.parseLong(time[2]) * 1000;
                 return getPlayerOnlineTime(player) >= requirement ? -1 : requirement - getPlayerOnlineTime(player);
             }
         }
