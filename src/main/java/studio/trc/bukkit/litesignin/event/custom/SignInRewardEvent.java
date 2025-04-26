@@ -5,6 +5,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+import org.jetbrains.annotations.NotNull;
 import studio.trc.bukkit.litesignin.reward.SignInRewardSchedule;
 
 public class SignInRewardEvent
@@ -30,7 +31,8 @@ public class SignInRewardEvent
     public Player getPlayer() {
         return player;
     }
-    
+
+    @NotNull
     @Override
     public HandlerList getHandlers() {
         return handlers;

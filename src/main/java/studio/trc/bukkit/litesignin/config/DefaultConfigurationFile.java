@@ -2,8 +2,10 @@ package studio.trc.bukkit.litesignin.config;
 
 import studio.trc.bukkit.litesignin.util.MessageUtil;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,8 +18,8 @@ import studio.trc.bukkit.litesignin.Main;
 
 public class DefaultConfigurationFile
 {
-    private final static Map<ConfigurationType, FileConfiguration> cacheDefaultConfig = new HashMap();
-    private final static Map<ConfigurationType, Boolean> isDefaultConfigLoaded = new HashMap();
+    private final static Map<ConfigurationType, FileConfiguration> cacheDefaultConfig = new HashMap<>();
+    private final static Map<ConfigurationType, Boolean> isDefaultConfigLoaded = new HashMap<>();
     
     public static FileConfiguration getDefaultConfig(ConfigurationType type) {
         if (!isDefaultConfigLoaded.containsKey(type) || !isDefaultConfigLoaded.get(type)) {
@@ -46,12 +48,16 @@ public class DefaultConfigurationFile
                 fileName = "RewardSettings-NEWVERSION.yml";
             }
         }
-        try (Reader config = new InputStreamReader(Main.getInstance().getClass().getResource("/Languages/" + jarPath + "/" + fileName).openStream(), "UTF-8")) {
-            FileConfiguration configFile = new YamlConfiguration();
-            configFile.load(config);
-            cacheDefaultConfig.put(type, configFile);
-        } catch (IOException | InvalidConfigurationException ex) {
-            ex.printStackTrace();
+        InputStream resource = Main.getInstance().getResource("Languages/" + jarPath + "/" + fileName);
+        if (resource != null) {
+            try (InputStream input = resource;
+                 Reader config = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                FileConfiguration configFile = new YamlConfiguration();
+                configFile.load(config);
+                cacheDefaultConfig.put(type, configFile);
+            } catch (IOException | InvalidConfigurationException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

@@ -52,10 +52,10 @@ public class Join
                         autoSignIn = true;
                     } else if (OnlineTimeRecord.signInRequirement(player) == -1) {
                         SignInDate date = SignInDate.getInstance(new Date());
-                        MessageUtil.getMessageList("Join-Event.Messages").stream().forEach(text -> {
+                        for (String text : MessageUtil.getMessageList("Join-Event.Messages")) {
                             if (text.toLowerCase().contains("%opengui%")) {
                                 BaseComponent click = new TextComponent(MessageUtil.getMessage("Join-Event.Open-GUI"));
-                                List<BaseComponent> hoverText = new ArrayList();
+                                List<BaseComponent> hoverText = new ArrayList<>();
                                 int end = 0;
                                 List<String> array = MessageUtil.getMessageList("Join-Event.Hover-Text");
                                 for (String hover : array) {
@@ -71,7 +71,7 @@ public class Join
                                 ClickEvent ce = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/litesignin gui");
                                 click.setClickEvent(ce);
                                 click.setHoverEvent(he);
-                                Map<String, BaseComponent> baseComponents = new HashMap();
+                                Map<String, BaseComponent> baseComponents = new HashMap<>();
                                 baseComponents.put("%opengui%", click);
                                 Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                 MessageUtil.sendMessage(player, text, placeholders, baseComponents);
@@ -80,7 +80,7 @@ public class Join
                                 placeholders.put("{date}", date.getName(ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getString(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Date-Format")));
                                 MessageUtil.sendMessage(player, text, placeholders);
                             }
-                        });
+                        }
                     }
                 }
             }

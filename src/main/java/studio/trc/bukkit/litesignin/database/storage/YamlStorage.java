@@ -1,9 +1,8 @@
 package studio.trc.bukkit.litesignin.database.storage;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -37,12 +36,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 public final class YamlStorage
     implements Storage
 {
-    public static final Map<UUID, YamlStorage> cache = new HashMap();
+    public static final Map<UUID, YamlStorage> cache = new HashMap<>();
     
     private final UUID uuid;
     private final FileConfiguration config = new YamlConfiguration();
@@ -56,13 +54,14 @@ public final class YamlStorage
             dataFolder.mkdir();
         }
         
-        File dataFile = new File("plugins/LiteSignIn/Players/" + uuid.toString() + ".yml");
+        File dataFile = new File("plugins/LiteSignIn/Players/" + uuid + ".yml");
         if (!dataFile.exists()) {
             try {
                 dataFile.createNewFile();
-            } catch (IOException ex) {}
+            } catch (IOException ignored) {}
         }
-        try (InputStreamReader Config = new InputStreamReader(new FileInputStream(dataFile), "UTF-8")) {
+        try (InputStream fis = Files.newInputStream(dataFile.toPath());
+             InputStreamReader Config = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
             config.load(Config);
         } catch (IOException | InvalidConfigurationException ex) {
             dataFileRepair();
@@ -85,9 +84,10 @@ public final class YamlStorage
         if (!dataFile.exists()) {
             try {
                 dataFile.createNewFile();
-            } catch (IOException ex) {}
+            } catch (IOException ignored) {}
         }
-        try (InputStreamReader Config = new InputStreamReader(new FileInputStream(dataFile), "UTF-8")) {
+        try (InputStream fis = Files.newInputStream(dataFile.toPath());
+             InputStreamReader Config = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
             config.load(Config);
         } catch (IOException | InvalidConfigurationException ex) {
             dataFileRepair();
@@ -104,20 +104,22 @@ public final class YamlStorage
         int year = getYear();
         int month = getMonth();
         int day = getDay();
-        if (Integer.valueOf(date[0]) == year && Integer.valueOf(date[1]) == month && Integer.valueOf(date[2]) == day) return;
+        if (Integer.parseInt(date[0]) == year
+         && Integer.parseInt(date[1]) == month
+         && Integer.parseInt(date[2]) == day) return;
         boolean breakSign = true;
-        if (year == Integer.valueOf(date[0])) {
+        if (year == Integer.parseInt(date[0])) {
             int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
             if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
                 days[1] = 29;
             }
-            if (days[month - 1] == day && month + 1 == Integer.valueOf(date[1])) {
+            if (days[month - 1] == day && month + 1 == Integer.parseInt(date[1])) {
                 breakSign = false;
-            } else if (day + 1 == Integer.valueOf(date[2])) {
+            } else if (day + 1 == Integer.parseInt(date[2])) {
                 breakSign = false;
             }
-        } else if (year + 1 == Integer.valueOf(date[0])) {
-            if (month == 12 && Integer.valueOf(date[1]) == 1 && day == 31 && Integer.valueOf(date[2]) == 1) {
+        } else if (year + 1 == Integer.parseInt(date[0])) {
+            if (month == 12 && Integer.parseInt(date[1]) == 1 && day == 31 && Integer.parseInt(date[2]) == 1) {
                 breakSign = false;
             }
         }
@@ -131,7 +133,7 @@ public final class YamlStorage
         Player player = Bukkit.getPlayer(uuid);
         if (player == null) return;
         if (ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Enable-Multi-Group-Reward")) {
-            getAllGroup().stream().forEach(group -> {
+            for (SignInGroup group : getAllGroup()) {
                 int queue = SignInQueue.getInstance().getRank(uuid);
                 int continuousSignIn = getContinuousSignIn();
                 int totalNumber = getCumulativeNumber();
@@ -162,7 +164,7 @@ public final class YamlStorage
                 SignInRewardEvent event = new SignInRewardEvent(player, rewardQueue);
                 Bukkit.getPluginManager().callEvent(event);
                 if (!event.isCancelled()) rewardQueue.run(retroactiveDate != null);
-            });
+            }
         } else {
             SignInGroup group = getGroup();
             if (group == null) return;
@@ -224,7 +226,7 @@ public final class YamlStorage
     public List<SignInGroup> getAllGroup() {
         Player player = Bukkit.getPlayer(uuid);
         if (player == null) return null;
-        List<SignInGroup> groups = new ArrayList();
+        List<SignInGroup> groups = new ArrayList<>();
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS);
         config.getStringList("Reward-Settings.Groups-Priority").stream()
             .filter(group -> config.get("Reward-Settings.Permission-Groups." + group + ".Permission") != null && player.hasPermission(config.getString("Reward-Settings.Permission-Groups." + group + ".Permission")))
@@ -285,8 +287,7 @@ public final class YamlStorage
             if (retroactiveCard == null) return 0;
             for (ItemStack is : player.getInventory().getContents()) {
                 if (is != null && !is.getType().equals(Material.AIR)) {
-                    ItemMeta im = is.getItemMeta();
-                    if (im.equals(retroactiveCard.getItemMeta())) {
+                    if (is.isSimilar(retroactiveCard)) {
                         amount += is.getAmount();
                     }
                 }
@@ -323,11 +324,9 @@ public final class YamlStorage
 
     @Override
     public List<SignInDate> getHistory() {
-        List<SignInDate> history = new ArrayList();
-        if (config.get("History") != null) {
-            config.getStringList("History").stream().forEach(data -> {
-                history.add(SignInDate.getInstance(data));
-            });
+        List<SignInDate> history = new ArrayList<>();
+        for (String data : config.getStringList("History")) {
+            history.add(SignInDate.getInstance(data));
         }
         return history;
     }
@@ -345,23 +344,24 @@ public final class YamlStorage
     @Override
     public List<SignInDate> clearUselessData(List<SignInDate> dates) {
         if (dates.size() == 1) return dates;
-        List<SignInDate> result = new ArrayList();
-        List<String> record = new ArrayList();
-        dates.stream().filter(date -> !record.contains(date.getYear() + "-" + date.getMonth() + "-" + date.getDay())).map(date -> {
-            result.add(date);
-            return date;
-        }).forEach(date -> {
-            record.add(date.getYear() + "-" + date.getMonth() + "-" + date.getDay());
-        });
+        List<SignInDate> result = new ArrayList<>();
+        List<String> record = new ArrayList<>();
+        for (SignInDate date : dates) {
+            String str = date.getYear() + "-" + date.getMonth() + "-" + date.getDay();
+            if (!record.contains(str)) {
+                record.add(str);
+                result.add(date);
+            }
+        }
         return result;
     }
     
     @Override
     public void setHistory(List<SignInDate> history, boolean saveData) {
-        List<String> data = new ArrayList();
-        history.stream().forEach(dates -> {
+        List<String> data = new ArrayList<>();
+        for (SignInDate dates : history) {
             data.add(dates.getDataText(dates.hasTimePeriod()));
-        });
+        }
         config.set("History", data);
         if (saveData) saveData();
     }
@@ -395,7 +395,7 @@ public final class YamlStorage
         if (event.isCancelled()) {
             return;
         }
-        List<SignInDate> historys = new ArrayList();
+        List<SignInDate> historys = new ArrayList<>();
         boolean added = false;
         if (!getHistory().isEmpty()) {
             for (SignInDate records : getHistory()) {
@@ -449,11 +449,10 @@ public final class YamlStorage
             if (player == null) return;
             ItemStack retroactiveCard = PluginControl.getRetroactiveCardRequiredItem(player);
             if (retroactiveCard == null) return;
-            List<ItemStack> itemOnInv = new ArrayList();
+            List<ItemStack> itemOnInv = new ArrayList<>();
             for (ItemStack is : player.getInventory().getContents()) {
                 if (is != null && !is.getType().equals(Material.AIR)) {
-                    ItemMeta im = is.getItemMeta();
-                    if (im.equals(retroactiveCard.getItemMeta())) {
+                    if (is.isSimilar(retroactiveCard)) {
                         itemOnInv.add(is);
                     }
                 }
@@ -482,7 +481,7 @@ public final class YamlStorage
             if (retroactiveCard == null) return;
             for (ItemStack items : player.getInventory().getContents()) {
                 if (items != null && !items.getType().equals(Material.AIR)) {
-                    if (items.getItemMeta().equals(retroactiveCard.getItemMeta())) {
+                    if (items.isSimilar(retroactiveCard)) {
                         items.setAmount(0);
                         items.setType(Material.AIR);
                     }
@@ -494,11 +493,10 @@ public final class YamlStorage
             } else {
                 player.getWorld().dropItem(player.getLocation(), retroactiveCard);
             }
-            if (saveData) saveData();
         } else {
-            config.set("RetroactiveCard", amount >= 0 ? amount : 0);
-            if (saveData) saveData();
+            config.set("RetroactiveCard", Math.max(amount, 0));
         }
+        if (saveData) saveData();
     }
     
     @Override
@@ -524,7 +522,7 @@ public final class YamlStorage
         if (loaded) {
             try {
                 config.save("plugins/LiteSignIn/Players/" + uuid + ".yml");
-            } catch (IOException ex) {}
+            } catch (IOException ignored) {}
         }
     }
     
@@ -533,14 +531,15 @@ public final class YamlStorage
         if (!dataFolder.exists()) {
             dataFolder.mkdir();
         }
-        File dataFile = new File("plugins/LiteSignIn/Players/" + uuid.toString() + ".yml");
-        dataFile.renameTo(new File("plugins/LiteSignIn/Broken-Players/" + uuid.toString() + ".yml"));
+        File dataFile = new File("plugins/LiteSignIn/Players/" + uuid + ".yml");
+        dataFile.renameTo(new File("plugins/LiteSignIn/Broken-Players/" + uuid + ".yml"));
         try {
             dataFile.createNewFile();
-        } catch (IOException ex) {}
-        try (InputStreamReader Config = new InputStreamReader(new FileInputStream(dataFile), "UTF-8")) {
+        } catch (IOException ignored) {}
+        try (InputStream fis = Files.newInputStream(dataFile.toPath());
+             InputStreamReader Config = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
             config.load(Config);
-        } catch (IOException | InvalidConfigurationException ex) {}
+        } catch (IOException | InvalidConfigurationException ignored) {}
     }
     
     public static YamlStorage getPlayerData(Player player) {
@@ -565,8 +564,7 @@ public final class YamlStorage
     
     /**
      * Back up all player data.
-     * @param filePath Backup file path. 
-     * @throws java.sql.SQLException 
+     * @param filePath Backup file path.
      */
     public static void backup(String filePath) throws SQLException {
         try (Connection sqlConnection = DriverManager.getConnection("jdbc:sqlite:" + filePath)) {
@@ -586,7 +584,7 @@ public final class YamlStorage
             File playerFolder = new File("plugins/LiteSignIn/Players");
             if (playerFolder.exists()) {
                 File[] dataFiles = playerFolder.listFiles();
-                for (File dataFile : dataFiles) {
+                if (dataFiles != null) for (File dataFile : dataFiles) {
                     if (dataFile.getName().endsWith(".yml")) {
                         YamlConfiguration yaml = new YamlConfiguration();
                         try {
@@ -607,9 +605,6 @@ public final class YamlStorage
                         String history = yaml.getStringList("History").toString().substring(1, yaml.getStringList("History").toString().length() - 1);
                         if (name == null) {
                             name = "null";
-                        }
-                        if (history == null) {
-                            history = "";
                         }
                         try (PreparedStatement statement = sqlConnection.prepareStatement("INSERT INTO PlayerData(UUID, Name, Year, Month, Day, Hour, Minute, Second, Continuous, RetroactiveCard, History)"
                                 + " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {

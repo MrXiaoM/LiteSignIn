@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -37,12 +36,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 public final class MySQLStorage
     implements Storage
 {
-    public static final Map<UUID, MySQLStorage> cache = new HashMap();
+    public static final Map<UUID, MySQLStorage> cache = new HashMap<>();
     
     @Getter
     private int continuous = 0;
@@ -61,7 +59,7 @@ public final class MySQLStorage
     @Getter
     private String name = null;
     @Getter
-    private List<SignInDate> history = new ArrayList();
+    private List<SignInDate> history = new ArrayList<>();
     private final UUID uuid;
     private int retroactiveCard = 0; 
     private boolean loaded = false;
@@ -94,17 +92,17 @@ public final class MySQLStorage
                     minute = rs.getObject("Minute") != null ? rs.getInt("Minute") : 0;
                     second = rs.getObject("Second") != null ? rs.getInt("Second") : 0;
                     retroactiveCard = rs.getObject("RetroactiveCard") != null ? rs.getInt("RetroactiveCard") : 0;
-                    if (rs.getObject("History") != null && !rs.getString("History").equals("")) {
-                        List<SignInDate> list = new ArrayList();
-                        for (String data : Arrays.asList(rs.getString("History").split(", "))) {
+                    if (rs.getObject("History") != null && !rs.getString("History").isEmpty()) {
+                        List<SignInDate> list = new ArrayList<>();
+                        for (String data : rs.getString("History").split(", ")) {
                             list.add(SignInDate.getInstance(data));
                         }
                         history = list;
                     } else {
-                        history = new ArrayList();
+                        history = new ArrayList<>();
                     }
                 } else {
-                    String playerName = Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid).getName() : Bukkit.getOfflinePlayer(uuid) != null ? Bukkit.getOfflinePlayer(uuid).getName() : "null";
+                    String playerName = PluginControl.getPlayerName(uuid);
                     mysql.executeUpdate("INSERT INTO " + mysql.getTableSyntax(DatabaseTable.PLAYER_DATA)
                             + "(UUID, Name, Year, Month, Day, Hour, Minute, Second, Continuous)"
                             + " VALUES(?, ?, 1970, 1, 1, 0, 0, 0, 0)", uuid.toString(), playerName);
@@ -123,20 +121,22 @@ public final class MySQLStorage
         int y = getYear();
         int m = getMonth();
         int d = getDay();
-        if (Integer.valueOf(date[0]) == year && Integer.valueOf(date[1]) == month && Integer.valueOf(date[2]) == day) return;
+        if (Integer.parseInt(date[0]) == year
+         && Integer.parseInt(date[1]) == month
+         && Integer.parseInt(date[2]) == day) return;
         boolean breakSign = true;
-        if (y == Integer.valueOf(date[0])) {
+        if (y == Integer.parseInt(date[0])) {
             int[] ds = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
             if ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) {
                 ds[1] = 29;
             }
-            if (ds[m - 1] == d && m + 1 == Integer.valueOf(date[1])) {
+            if (ds[m - 1] == d && m + 1 == Integer.parseInt(date[1])) {
                 breakSign = false;
-            } else if (d + 1 == Integer.valueOf(date[2])) {
+            } else if (d + 1 == Integer.parseInt(date[2])) {
                 breakSign = false;
             }
-        } else if (y + 1 == Integer.valueOf(date[0])) {
-            if (m == 12 && Integer.valueOf(date[1]) == 1 && d == 31 && Integer.valueOf(date[2]) == 1) {
+        } else if (y + 1 == Integer.parseInt(date[0])) {
+            if (m == 12 && Integer.parseInt(date[1]) == 1 && d == 31 && Integer.parseInt(date[2]) == 1) {
                 breakSign = false;
             }
         }
@@ -150,7 +150,7 @@ public final class MySQLStorage
         Player player = Bukkit.getPlayer(uuid);
         if (player == null) return;
         if (ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Enable-Multi-Group-Reward")) {
-            getAllGroup().stream().forEach(group -> {
+            for (SignInGroup group : getAllGroup()) {
                 int queue = SignInQueue.getInstance().getRank(uuid);
                 int continuousSignIn = getContinuousSignIn();
                 int totalNumber = getCumulativeNumber();
@@ -181,7 +181,7 @@ public final class MySQLStorage
                 SignInRewardEvent event = new SignInRewardEvent(player, rewardQueue);
                 Bukkit.getPluginManager().callEvent(event);
                 if (!event.isCancelled()) rewardQueue.run(retroactiveDate != null);
-            });
+            }
         } else {
             SignInGroup group = getGroup();
             if (group == null) return;
@@ -243,7 +243,7 @@ public final class MySQLStorage
     public List<SignInGroup> getAllGroup() {
         Player player = Bukkit.getPlayer(uuid);
         if (player == null) return null;
-        List<SignInGroup> groups = new ArrayList();
+        List<SignInGroup> groups = new ArrayList<>();
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS);
         config.getStringList("Reward-Settings.Groups-Priority").stream()
             .filter(group -> config.get("Reward-Settings.Permission-Groups." + group + ".Permission") != null && player.hasPermission(config.getString("Reward-Settings.Permission-Groups." + group + ".Permission")))
@@ -284,8 +284,7 @@ public final class MySQLStorage
             if (card == null) return 0;
             for (ItemStack is : player.getInventory().getContents()) {
                 if (is != null && !is.getType().equals(Material.AIR)) {
-                    ItemMeta im = is.getItemMeta();
-                    if (im.equals(card.getItemMeta())) {
+                    if (is.isSimilar(card)) {
                         amount += is.getAmount();
                     }
                 }
@@ -318,12 +317,15 @@ public final class MySQLStorage
     @Override
     public List<SignInDate> clearUselessData(List<SignInDate> dates) {
         if (dates.size() == 1) return dates;
-        List<SignInDate> result = new ArrayList();
-        List<String> record = new ArrayList();
-        dates.stream().filter(date -> !record.contains(date.getYear() + "-" + date.getMonth() + "-" + date.getDay())).map(date -> {
-            result.add(date);
-            return date;
-        }).forEach(date -> record.add(date.getYear() + "-" + date.getMonth() + "-" + date.getDay()));
+        List<SignInDate> result = new ArrayList<>();
+        List<String> record = new ArrayList<>();
+        for (SignInDate date : dates) {
+            String str = date.getYear() + "-" + date.getMonth() + "-" + date.getDay();
+            if (!record.contains(str)) {
+                record.add(str);
+                result.add(date);
+            }
+        }
         return result;
     }
     
@@ -363,29 +365,29 @@ public final class MySQLStorage
         if (event.isCancelled()) {
             return;
         }
-        List<SignInDate> historys = new ArrayList();
+        List<SignInDate> histories = new ArrayList<>();
         boolean added = false;
         if (!getHistory().isEmpty()) {
             for (SignInDate records : getHistory()) {
                 if (historicalDate.compareTo(records) > 0) {
-                    historys.add(records);
+                    histories.add(records);
                 } else if (historicalDate.compareTo(records) == 0) {
-                    historys.add(historicalDate);
+                    histories.add(historicalDate);
                     added = true;
                 } else if (historicalDate.compareTo(records) < 0) {
                     if (!added) {
-                        historys.add(historicalDate);
+                        histories.add(historicalDate);
                         added = true;
                     }
-                    historys.add(records);
+                    histories.add(records);
                 }
             }
         }
         if (!added) {
-            historys.add(historicalDate);
+            histories.add(historicalDate);
         }
-        setHistory(clearUselessData(historys), false);
-        setContinuousSignIn(SignInDate.getContinuous(historys), true);
+        setHistory(clearUselessData(histories), false);
+        setContinuousSignIn(SignInDate.getContinuous(histories), true);
         giveReward(historicalDate);
         lastSignInTime.put(uuid, System.currentTimeMillis());
     }
@@ -434,11 +436,10 @@ public final class MySQLStorage
             if (player == null) return;
             ItemStack card = PluginControl.getRetroactiveCardRequiredItem(player);
             if (card == null) return;
-            List<ItemStack> itemOnInv = new ArrayList();
+            List<ItemStack> itemOnInv = new ArrayList<>();
             for (ItemStack is : player.getInventory().getContents()) {
                 if (is != null && !is.getType().equals(Material.AIR)) {
-                    ItemMeta im = is.getItemMeta();
-                    if (im.equals(card.getItemMeta())) {
+                    if (is.isSimilar(card)) {
                         itemOnInv.add(is);
                     }
                 }
@@ -467,7 +468,7 @@ public final class MySQLStorage
             if (card == null) return;
             for (ItemStack items : player.getInventory().getContents()) {
                 if (items != null && !items.getType().equals(Material.AIR)) {
-                    if (items.getItemMeta().equals(card.getItemMeta())) {
+                    if (items.isSimilar(card)) {
                         items.setAmount(0);
                         items.setType(Material.AIR);
                     }
@@ -479,11 +480,10 @@ public final class MySQLStorage
             } else {
                 player.getWorld().dropItem(player.getLocation(), card);
             }
-            if (saveData) saveData();
         } else {
-            retroactiveCard = amount >= 0 ? amount : 0;
-            if (saveData) saveData();
+            retroactiveCard = Math.max(amount, 0);
         }
+        if (saveData) saveData();
     }
     
     @Override
@@ -492,7 +492,7 @@ public final class MySQLStorage
             try {
                 MySQLEngine mysql = MySQLEngine.getInstance();
                 mysql.checkConnection();
-                String playerName = Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid).getName() : Bukkit.getOfflinePlayer(uuid) != null ? Bukkit.getOfflinePlayer(uuid).getName() : "null";
+                String playerName = PluginControl.getPlayerName(uuid);
                 mysql.executeUpdate("UPDATE " + mysql.getTableSyntax(DatabaseTable.PLAYER_DATA) + " SET Name = ?,"
                     + "Year = " + year + ", "
                     + "Month = " + month + ", "
@@ -543,8 +543,7 @@ public final class MySQLStorage
     
     /**
      * Back up all player data.
-     * @param filePath Backup file path. 
-     * @throws java.sql.SQLException 
+     * @param filePath Backup file path.
      */
     public static void backup(String filePath) throws SQLException {
         try (Connection sqlConnection = DriverManager.getConnection("jdbc:sqlite:" + filePath)) {

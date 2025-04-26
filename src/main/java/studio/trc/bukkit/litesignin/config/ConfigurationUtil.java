@@ -1,14 +1,15 @@
 package studio.trc.bukkit.litesignin.config;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -21,7 +22,7 @@ import studio.trc.bukkit.litesignin.util.MessageUtil;
 
 public class ConfigurationUtil
 {
-    private final static Map<ConfigurationType, PreparedConfiguration> cache = new HashMap();
+    private final static Map<ConfigurationType, PreparedConfiguration> cache = new HashMap<>();
     
     public static PreparedConfiguration getConfig(ConfigurationType type) {
         if (cache.get(type) == null) {
@@ -36,11 +37,13 @@ public class ConfigurationUtil
     
     public static void reloadConfig(ConfigurationType fileType) {
         saveResource(fileType);
-        try (InputStreamReader Config = new InputStreamReader(new FileInputStream("plugins/LiteSignIn/" + fileType.getFileName()), "UTF-8")) {
+        try (InputStream fis = Files.newInputStream(new File(Main.getInstance().getDataFolder(), fileType.getFileName()).toPath());
+            InputStreamReader Config = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
             getFileConfiguration(fileType).load(Config);
         } catch (IOException | InvalidConfigurationException ex) {
-            File oldFile = new File("plugins/LiteSignIn/" + fileType.getFileName() + ".old");
-            File file = new File("plugins/LiteSignIn/" + fileType.getFileName());
+            File dataFolder = Main.getInstance().getDataFolder();
+            File oldFile = new File(dataFolder, fileType.getFileName() + ".old");
+            File file = new File(dataFolder, fileType.getFileName());
             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
             placeholders.put("{file}", fileType.getFileName());
             SignInPluginProperties.sendOperationMessage("ConfigurationLoadingError", placeholders);
@@ -49,11 +52,12 @@ public class ConfigurationUtil
             }
             file.renameTo(oldFile);
             saveResource(fileType);
-            try (InputStreamReader newConfig = new InputStreamReader(new FileInputStream(file), "UTF-8")) {
+            try (InputStream fis = Files.newInputStream(file.toPath());
+                 InputStreamReader newConfig = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
                 getFileConfiguration(fileType).load(newConfig);
-                SignInPluginProperties.sendOperationMessage("ConfigurationRepair", new HashMap());
+                SignInPluginProperties.sendOperationMessage("ConfigurationRepair", new HashMap<>());
             } catch (IOException | InvalidConfigurationException ex1) {
-                ex1.printStackTrace();
+                Main.getInstance().getLogger().log(Level.WARNING, "保存默认配置 " + fileType.getFileName() + " 时出现异常", ex);
             }
         }
     }
@@ -68,31 +72,37 @@ public class ConfigurationUtil
     }
     
     public static void saveResource(ConfigurationType fileType) {
-        if (!new File("plugins/LiteSignIn").exists()) {
-            new File("plugins/LiteSignIn").mkdir();
+        File dataFolder = Main.getInstance().getDataFolder();
+        if (!dataFolder.exists()) {
+            dataFolder.mkdir();
         }
         try {
-            File configFile = new File("plugins/LiteSignIn/" + fileType.getFileName());
+            File configFile = new File(dataFolder, fileType.getFileName());
             if (!configFile.exists()) {
                 configFile.createNewFile();
                 InputStream is;
                 if (fileType.equals(ConfigurationType.GUI_SETTINGS) || fileType.equals(ConfigurationType.REWARD_SETTINGS)) {
                     String version = Bukkit.getBukkitVersion();
                     if (version.startsWith("1.7") || version.startsWith("1.8") || version.startsWith("1.9") || version.startsWith("1.10") || version.startsWith("1.11") || version.startsWith("1.12")) {
-                        is = Main.class.getResourceAsStream("/Languages/" + MessageUtil.Language.getLocaleLanguage().getFolderName() + "/" + fileType.getFileName().replace(".yml", "") + "-OLDVERSION.yml");
+                        is = Main.getInstance().getResource("Languages/" + MessageUtil.Language.getLocaleLanguage().getFolderName() + "/" + fileType.getFileName().replace(".yml", "") + "-OLDVERSION.yml");
                     } else {
-                        is = Main.class.getResourceAsStream("/Languages/" + MessageUtil.Language.getLocaleLanguage().getFolderName() + "/" + fileType.getFileName().replace(".yml", "") + "-NEWVERSION.yml");
+                        is = Main.getInstance().getResource("Languages/" + MessageUtil.Language.getLocaleLanguage().getFolderName() + "/" + fileType.getFileName().replace(".yml", "") + "-NEWVERSION.yml");
                     }
                 } else {
-                    is = Main.class.getResourceAsStream("/Languages/" + MessageUtil.Language.getLocaleLanguage().getFolderName() + "/" + fileType.getFileName());
+                    is = Main.getInstance().getResource("Languages/" + MessageUtil.Language.getLocaleLanguage().getFolderName() + "/" + fileType.getFileName());
                 }
-                byte[] bytes = new byte[is.available()];
-                for (int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
-                try (OutputStream out = new FileOutputStream(configFile)) {
-                    out.write(bytes);
+                if (is != null) {
+                    try (InputStream input = is;
+                         OutputStream output = Files.newOutputStream(configFile.toPath())) {
+                        int length;
+                        byte[] buffer = new byte[16 * 1024];
+                        while ((length = input.read(buffer)) != -1) {
+                            output.write(buffer, 0, length);
+                        }
+                    }
                 }
             }
-        } catch (IOException ex) {}
+        } catch (IOException ignored) {}
     }
 
     public static void saveConfig() {
@@ -106,9 +116,10 @@ public class ConfigurationUtil
     
     public static void saveConfig(ConfigurationType fileType) {
         try {
-            cache.get(fileType).getRawConfig().save("plugins/LiteSignIn/" + fileType.getFileName());
+            File file = new File(Main.getInstance().getDataFolder(), fileType.getFileName());
+            cache.get(fileType).getRawConfig().save(file);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Main.getInstance().getLogger().log(Level.WARNING, "保存 " + fileType.getFileName() + " 配置时出现异常", ex);
         }
     }
 }

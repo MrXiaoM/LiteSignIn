@@ -32,7 +32,7 @@ public enum DatabaseTable
     @Getter
     private final List<DatabaseElement> elements;
     
-    private DatabaseTable(String name, List<DatabaseElement> elements) {
+    DatabaseTable(String name, List<DatabaseElement> elements) {
         this.name = name;
         this.elements = elements;
     }
@@ -75,16 +75,19 @@ public enum DatabaseTable
         for (DatabaseElement element : elements) {
             if (element.isPrimaryKey()) {
                 non = false;
+                break;
             }
         }
         if (non) return builder.toString();
         builder.append(", PRIMARY KEY (");
-        List<String> primaryKeys = new ArrayList();
-        elements.stream().filter(element -> element.isPrimaryKey()).forEach(element -> {
-            primaryKeys.add(element.getField());
-        });
+        List<String> primaryKeys = new ArrayList<>();
+        for (DatabaseElement e : elements) {
+            if (e.isPrimaryKey()) {
+                primaryKeys.add(e.getField());
+            }
+        }
         if (!primaryKeys.isEmpty()) {
-            builder.append(primaryKeys.toString().substring(1, primaryKeys.toString().length() - 1));
+            builder.append(primaryKeys.toString(), 1, primaryKeys.toString().length() - 1);
         }
         builder.append(")");
         return builder.toString();

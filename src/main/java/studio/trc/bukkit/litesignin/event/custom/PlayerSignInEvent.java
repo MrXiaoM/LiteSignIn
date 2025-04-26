@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 import studio.trc.bukkit.litesignin.util.SignInDate;
 
 public class PlayerSignInEvent
@@ -40,7 +41,8 @@ public class PlayerSignInEvent
     public boolean usingRetroactiveCard() {
         return usingRetroactiveCard;
     }
-    
+
+    @NotNull
     @Override
     public HandlerList getHandlers() {
         return handlers;

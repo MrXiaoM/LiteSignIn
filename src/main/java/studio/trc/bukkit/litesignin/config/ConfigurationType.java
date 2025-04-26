@@ -34,7 +34,7 @@ public enum ConfigurationType
     
     private final String fileName;
     
-    private ConfigurationType(String fileName) {
+    ConfigurationType(String fileName) {
         this.fileName = fileName;
     }
     

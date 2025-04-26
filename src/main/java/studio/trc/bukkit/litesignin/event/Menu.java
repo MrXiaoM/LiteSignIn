@@ -36,7 +36,7 @@ import org.bukkit.event.inventory.InventoryType;
 public class Menu
     implements Listener
 {
-    public static final Map<UUID, SignInInventory> menuOpening = new HashMap();
+    public static final Map<UUID, SignInInventory> menuOpening = new HashMap<>();
     
     public static void openGUI(Player player) {
         Runnable task = () -> {
@@ -176,15 +176,11 @@ public class Menu
                                 placeholders.put("{previousPageMonth}", String.valueOf(previousPageMonth));
                                 placeholders.put("{previousPageYear}", String.valueOf(previousPageYear));
                                 placeholders.put("{player}", player.getName());
-                                if (ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).contains(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + columns.getKeyType().getSectionName() + ".Commands")) {
-                                    ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + columns.getKeyType().getSectionName() + ".Commands").stream().forEach(commands -> {
-                                        runCommand(player, commands, placeholders);
-                                    });
+                                for (String commands : ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + columns.getKeyType().getSectionName() + ".Commands")) {
+                                    runCommand(player, commands, placeholders);
                                 }
-                                if (ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).contains(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + columns.getKeyType().getSectionName() + ".Messages")) {
-                                    ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + columns.getKeyType().getSectionName() + ".Messages").stream().forEach(message -> {
-                                        player.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(player, message, placeholders)));
-                                    });
+                                for (String message : ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + columns.getKeyType().getSectionName() + ".Messages")) {
+                                    player.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(player, message, placeholders)));
                                 }
                             } else {
                                 if (ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).contains(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName())) {
@@ -197,15 +193,11 @@ public class Menu
                                     placeholders.put("{previousPageMonth}", String.valueOf(previousPageMonth));
                                     placeholders.put("{previousPageYear}", String.valueOf(previousPageYear));
                                     placeholders.put("{player}", player.getName());
-                                    if (ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).contains(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName() + ".Commands")) {
-                                        ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName() + ".Commands").stream().forEach(commands -> {
-                                            runCommand(player, commands, placeholders);
-                                        });
+                                    for (String commands : ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName() + ".Commands")) {
+                                        runCommand(player, commands, placeholders);
                                     }
-                                    if (ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).contains(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName() + ".Messages")) {
-                                        ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName() + ".Messages").stream().forEach(message -> {
-                                            player.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(player, message, placeholders)));
-                                        });
+                                    for (String message : ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getStringList(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others." + columns.getButtonName() + ".Messages")) {
+                                        player.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(player, message, placeholders)));
                                     }
                                 }
                             }

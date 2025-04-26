@@ -1,11 +1,7 @@
 package studio.trc.bukkit.litesignin.util;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Consumer;
 
 import studio.trc.bukkit.litesignin.Main;
@@ -33,8 +29,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.Plugin;
 
-public class PluginControl
-{
+public class PluginControl {
+    public static String getPlayerName(UUID uuid) {
+        return Bukkit.getPlayer(uuid) != null
+                ? Bukkit.getPlayer(uuid).getName()
+                : Bukkit.getOfflinePlayer(uuid) != null
+                ? Bukkit.getOfflinePlayer(uuid).getName()
+                : "null";
+    }
+
     public static void reload() {
         ConfigurationUtil.reloadConfig();
         MessageUtil.loadPlaceholders();

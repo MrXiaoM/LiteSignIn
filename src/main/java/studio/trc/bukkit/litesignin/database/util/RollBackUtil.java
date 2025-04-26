@@ -38,7 +38,6 @@ public class RollBackUtil
      * @param rollBackFile Target backup file
      * @param backup Whether to back up the current data before performing a rollback
      * @param users State information recipient
-     * @return 
      */
     public static Thread startRollBack(File rollBackFile, boolean backup, CommandSender... users) {
         Thread thread = new Thread(new RollBackMethod(rollBackFile, users).rollBack(backup), "LiteSignIn-RollBack");
@@ -85,7 +84,8 @@ public class RollBackUtil
                             if (!playerFolder.exists()) {
                                 playerFolder.mkdirs();
                             } else {
-                                for (File playerFile : playerFolder.listFiles()) {
+                                File[] files = playerFolder.listFiles();
+                                if (files != null) for (File playerFile : files) {
                                     playerFile.delete();
                                 }
                             }

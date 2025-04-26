@@ -41,37 +41,29 @@ public class PreparedConfiguration
     public String getString(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getString(path);
-        } else {
-            return config.getString(path);
         }
+        return config.getString(path);
     }
 
     public int getInt(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getInt(path);
-        } else {
-            return config.getInt(path);
         }
+        return config.getInt(path);
     }
 
     public double getDouble(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getDouble(path);
-        } else {
-            return config.getDouble(path);
         }
+        return config.getDouble(path);
     }
 
     public long getLong(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getLong(path);
-        } else {
-            return config.getLong(path);
         }
+        return config.getLong(path);
     }
 
     public boolean getBoolean(String path) {
@@ -89,37 +81,29 @@ public class PreparedConfiguration
     public List<String> getStringList(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getStringList(path);
-        } else {
-            return config.getStringList(path);
         }
+        return config.getStringList(path);
     }
 
     public List<Integer> getIntegerList(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getIntegerList(path);
-        } else {
-            return config.getIntegerList(path);
         }
+        return config.getIntegerList(path);
     }
 
     public ItemStack getItemStack(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getItemStack(path);
-        } else {
-            return config.getItemStack(path);
         }
+        return config.getItemStack(path);
     }
 
     public ConfigurationSection getConfigurationSection(String path) {
         if (config.get(path) == null) {
             repairConfigurationSection(path);
-            return config.getConfigurationSection(path);
-        } else {
-            return config.getConfigurationSection(path);
         }
+        return config.getConfigurationSection(path);
     }
 
     public boolean contains(String path) {
