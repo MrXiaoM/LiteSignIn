@@ -1,5 +1,7 @@
 package studio.trc.bukkit.litesignin;
 
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.PlatformScheduler;
 import studio.trc.bukkit.litesignin.config.ConfigurationType;
 import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
 import studio.trc.bukkit.litesignin.command.SignInCommand;
@@ -36,6 +38,14 @@ public class Main
      * Main instance
      */
     private static Main main;
+    private final FoliaLib foliaLib;
+    public Main() {
+        foliaLib = new FoliaLib(this);
+    }
+
+    public PlatformScheduler getScheduler() {
+        return foliaLib.getScheduler();
+    }
     
     @Override
     public void onEnable() {
@@ -76,6 +86,7 @@ public class Main
         if (MySQLEngine.getInstance() != null) {
             MySQLEngine.getInstance().disconnect();
         }
+        foliaLib.getScheduler().cancelAllTasks();
     }
     
     public static Main getInstance() {

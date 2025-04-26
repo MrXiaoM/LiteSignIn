@@ -2,8 +2,8 @@ package studio.trc.bukkit.litesignin.util;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.Consumer;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import studio.trc.bukkit.litesignin.Main;
 import studio.trc.bukkit.litesignin.async.AutoSave;
 import studio.trc.bukkit.litesignin.config.PreparedConfiguration;
@@ -27,7 +27,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.plugin.Plugin;
 
 public class PluginControl {
     public static String getPlayerName(UUID uuid) {
@@ -325,26 +324,11 @@ public class PluginControl {
     }
     
     public static void runBukkitTask(Runnable task, long delay) {
-        try {
-            if (delay == 0) {
-                Bukkit.getScheduler().runTask(Main.getInstance(), task);
-            } else {
-                Bukkit.getScheduler().runTaskLater(Main.getInstance(), task, delay);
-            }
-        } catch (UnsupportedOperationException ex) {
-            //Folia suppport (test)
-            Consumer runnable = run -> task.run();
-            try {
-                Object globalRegionScheduler = Bukkit.class.getMethod("getGlobalRegionScheduler").invoke(null);
-                if (delay == 0) {
-                    globalRegionScheduler.getClass().getMethod("run", Plugin.class, Consumer.class).invoke(globalRegionScheduler, Main.getInstance(), runnable);
-                } else {
-                    globalRegionScheduler.getClass().getMethod("runDelayed", Plugin.class, Consumer.class, long.class).invoke(globalRegionScheduler, Main.getInstance(), runnable, delay);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                task.run();
-            }
+        PlatformScheduler scheduler = Main.getInstance().getScheduler();
+        if (delay == 0) {
+            scheduler.runNextTick((t) -> task.run());
+        } else {
+            scheduler.runLater(task, delay);
         }
     }
 }

@@ -27,6 +27,10 @@
             <id>md_5-releases</id>
             <url>https://repo.md-5.net/content/repositories/releases/</url>
         </repository>
+        <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io/</url>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -58,7 +62,20 @@
             <groupId>com.mojang</groupId>
             <artifactId>authlib</artifactId>
             <version>1.5.25</version>
+            <scope>provided</scope>
             <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.technicallycoded</groupId>
+            <artifactId>FoliaLib</artifactId>
+            <version>0.4.4</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <build>
@@ -66,7 +83,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                     <phase>package</phase>
@@ -74,13 +91,21 @@
                         <goal>shade</goal>
                     </goals>
                     <configuration>
-                        <minimizeJar>true</minimizeJar>
-                        <artifactSet>
-                            <includes>
-                                <include>studio.trc</include>
-                            </includes>
-                        </artifactSet>
+                        <filters>
+                            <filter>
+                                <artifact>com.github.technicallycoded:FoliaLib</artifact>
+                                <excludes>
+                                    <exclude>META-INF/*.MF</exclude>
+                                </excludes>
+                            </filter>
+                        </filters>
                         <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <relocations>
+                            <relocation>
+                                <pattern>com.tcoded.folialib</pattern>
+                                <shadedPattern>studio.trc.bukkit.litesignin.libs.folialib</shadedPattern>
+                            </relocation>
+                        </relocations>
                     </configuration>
                     </execution>
                 </executions>
