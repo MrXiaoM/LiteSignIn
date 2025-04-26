@@ -22,16 +22,16 @@ public class AutoSave
             try {
                 if (PluginControl.dataAutoSave()) {
                     if (!ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Auto-Save.Only-MySQL")) {
-                        YamlStorage.cache.values().stream().forEach(YamlStorage::saveData);
-                        SQLiteStorage.cache.values().stream().forEach(SQLiteStorage::saveData);
+                        YamlStorage.cache.values().forEach(YamlStorage::saveData);
+                        SQLiteStorage.cache.values().forEach(SQLiteStorage::saveData);
                     }
-                    MySQLStorage.cache.values().stream().forEach(MySQLStorage::saveData);
+                    MySQLStorage.cache.values().forEach(MySQLStorage::saveData);
                     MessageUtil.sendMessage(Bukkit.getConsoleSender(), ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Auto-Save");
                 }
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
             try {
                 sleep(ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getDouble("Auto-Save.Delay") < 1 ? 60000 : (long) (ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getDouble("Auto-Save.Delay") * 60000));
-            } catch (InterruptedException ex) {}
+            } catch (InterruptedException ignored) {}
         }
     }
   

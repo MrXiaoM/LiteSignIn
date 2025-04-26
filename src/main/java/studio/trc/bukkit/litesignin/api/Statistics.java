@@ -15,54 +15,47 @@ import studio.trc.bukkit.litesignin.util.PluginControl;
  */
 public interface Statistics
 {
-    public static Map<UUID, Long> lastSignInTime = new HashMap();
+    Map<UUID, Long> lastSignInTime = new HashMap<>();
     
     default boolean isRetroactiveCardCooldown() {
         return lastSignInTime.containsKey(getUserUUID()) && System.currentTimeMillis() - lastSignInTime.get(getUserUUID()) <= PluginControl.getRetroactiveCardIntervals() * 1000;
     }
     
     default double getRetroactiveCardCooldown() {
-        return lastSignInTime.containsKey(getUserUUID()) ? Double.valueOf(new DecimalFormat("#.0").format(PluginControl.getRetroactiveCardIntervals() - ((double) (System.currentTimeMillis() - lastSignInTime.get(getUserUUID())) / 1000))) : 0;
+        return lastSignInTime.containsKey(getUserUUID())
+                ? Double.parseDouble(new DecimalFormat("#.0").format(PluginControl.getRetroactiveCardIntervals() - ((double) (System.currentTimeMillis() - lastSignInTime.get(getUserUUID())) / 1000)))
+                : 0;
     }
     
-    public UUID getUserUUID();
+    UUID getUserUUID();
     
     /**
      * Check whether players sign in continuously.
      */
-    public void checkContinuousSignIn();
+    void checkContinuousSignIn();
     
     /**
      * Check whether users sign in on that day.
-     * @return 
      */
-    public boolean alreadySignIn();
+    boolean alreadySignIn();
     
     /**
      * Check whether the user is signed in on the day of user history.
-     * @param date
-     * @return 
      */
-    public boolean alreadySignIn(SignInDate date);
+    boolean alreadySignIn(SignInDate date);
     
     /**
      * Get the cumulative numbers of user sign in.
-     * @return 
      */
-    public int getCumulativeNumber();
+    int getCumulativeNumber();
     
     /**
      * Get the cumulative numbers of this month by user sign-in.
-     * @param year
-     * @param month
-     * @return 
      */
-    public int getCumulativeNumberOfMonth(int year, int month);
+    int getCumulativeNumberOfMonth(int year, int month);
     
     /**
      * Clean up duplicate sign in records.
-     * @param history
-     * @return 
      */
-    public List<SignInDate> clearUselessData(List<SignInDate> history);
+    List<SignInDate> clearUselessData(List<SignInDate> history);
 }

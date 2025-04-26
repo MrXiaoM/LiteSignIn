@@ -1,7 +1,6 @@
 package studio.trc.bukkit.litesignin.command.subcommand;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,8 @@ import studio.trc.bukkit.litesignin.reward.util.SignInTimePeriod;
 import studio.trc.bukkit.litesignin.util.SignInDate;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class RewardCommand
     implements SignInSubCommand
 {
@@ -41,6 +42,7 @@ public class RewardCommand
             Player player = Bukkit.getPlayer(args[1]);
             if (player == null) {
                 SignInPluginUtils.playerNotExist(sender, args[1]);
+                return;
             }
             placeholders.put("{player}", player.getName());
             //Check sign-in group.
@@ -95,8 +97,8 @@ public class RewardCommand
                         String value = args[3].substring(args[3].indexOf(":") + 1);
                         SignInDate date = SignInDate.getInstance(new Date());
                         String[] monthAndDay = value.split("-");
-                        date.setMonth(Integer.valueOf(monthAndDay[0]));
-                        date.setDay(Integer.valueOf(monthAndDay[1]));
+                        date.setMonth(Integer.parseInt(monthAndDay[0]));
+                        date.setDay(Integer.parseInt(monthAndDay[1]));
                         placeholders.put("{value}", date.getMonthAsString() + "-" + date.getDayAsString());
                         if (config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + date.getMonthAsString() + "-" + date.getDayAsString()) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.SPECIAL_DATES", placeholders);
@@ -106,7 +108,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_DATES", placeholders);
                     }
                     break;
@@ -121,7 +123,7 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_WEEKS", placeholders);
                             return;
                         }
-                        int week = Integer.valueOf(value);
+                        int week = Integer.parseInt(value);
                         if (week < 1 || week > 7 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + week) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.SPECIAL_WEEKS", placeholders);
                             return;
@@ -130,7 +132,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_WEEKS", placeholders);
                     }
                     break;
@@ -145,7 +147,7 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIMES", placeholders);
                             return;
                         }
-                        int time = Integer.valueOf(value);
+                        int time = Integer.parseInt(value);
                         if (time < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + time) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.SPECIAL_TIMES", placeholders);
                             return;
@@ -154,7 +156,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIMES", placeholders);
                     }
                     break;
@@ -169,7 +171,7 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_RANKING", placeholders);
                             return;
                         }
-                        int ranking = Integer.valueOf(value);
+                        int ranking = Integer.parseInt(value);
                         if (ranking < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + ranking) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.SPECIAL_RANKING", placeholders);
                             return;
@@ -178,7 +180,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_RANKING", placeholders);
                     }
                     break;
@@ -190,9 +192,9 @@ public class RewardCommand
                         String value = args[3].substring(args[3].indexOf(":") + 1);
                         SignInDate date = SignInDate.getInstance(new Date());
                         String[] timePeriod = value.split(":");
-                        date.setHour(Integer.valueOf(timePeriod[0]));
-                        date.setMinute(Integer.valueOf(timePeriod[1]));
-                        date.setSecond(Integer.valueOf(timePeriod[2]));
+                        date.setHour(Integer.parseInt(timePeriod[0]));
+                        date.setMinute(Integer.parseInt(timePeriod[1]));
+                        date.setSecond(Integer.parseInt(timePeriod[2]));
                         String settings = SignInTimePeriod.getSetting(group, date);
                         placeholders.put("{value}", settings);
                         if (config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + settings) == null) {
@@ -203,7 +205,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIME_PERIODS", placeholders);
                     }
                     break;
@@ -218,7 +220,7 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.STATISTICS", placeholders);
                             return;
                         }
-                        int number = Integer.valueOf(value);
+                        int number = Integer.parseInt(value);
                         if (number < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + number) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.STATISTICS", placeholders);
                             return;
@@ -227,7 +229,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.STATISTICS", placeholders);
                     }
                     break;
@@ -243,8 +245,8 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIMES_OF_MONTH", placeholders);
                             return;
                         }
-                        int month = Integer.valueOf(elements[1]);
-                        int time = Integer.valueOf(elements[0]);
+                        int month = Integer.parseInt(elements[1]);
+                        int time = Integer.parseInt(elements[0]);
                         if (time < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + time) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.SPECIAL_TIMES_OF_MONTH", placeholders);
                             return;
@@ -253,7 +255,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIMES_OF_MONTH", placeholders);
                     }
                     break;
@@ -269,8 +271,8 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.STATISTICS_OF_MONTH", placeholders);
                             return;
                         }
-                        int month = Integer.valueOf(elements[1]);
-                        int number = Integer.valueOf(elements[0]);
+                        int month = Integer.parseInt(elements[1]);
+                        int number = Integer.parseInt(elements[0]);
                         if (number < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + number) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.STATISTICS_OF_MONTH", placeholders);
                             return;
@@ -279,7 +281,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.STATISTICS_OF_MONTH", placeholders);
                     }
                     break;
@@ -294,7 +296,7 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIMES_CYCLE", placeholders);
                             return;
                         }
-                        int time = Integer.valueOf(value);
+                        int time = Integer.parseInt(value);
                         if (time < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + time) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.SPECIAL_TIMES_CYCLE", placeholders);
                             return;
@@ -303,7 +305,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.SPECIAL_TIMES_CYCLE", placeholders);
                     }
                     break;
@@ -318,7 +320,7 @@ public class RewardCommand
                             MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.STATISTICS_CYCLE", placeholders);
                             return;
                         }
-                        int number = Integer.valueOf(value);
+                        int number = Integer.parseInt(value);
                         if (number < 1 || config.get("Reward-Settings.Permission-Groups." + group.getGroupName() + "." + rewardType.getConfigName() + "." + number) == null) {
                             MessageUtil.sendCommandMessage(sender, "Reward.Invalid-Parameters.STATISTICS_CYCLE", placeholders);
                             return;
@@ -327,7 +329,7 @@ public class RewardCommand
                         reward.giveReward(playerdata);
                         MessageUtil.sendCommandMessage(sender, "Reward.Successfully-Reward", placeholders);
                     } catch (Exception ex) {
-                        placeholders.put("{value}", args.length >= 3 ? args[3].substring(args[3].indexOf(":") + 1) : MessageUtil.getMessage("Command-Messages.Reward.Nothing"));
+                        placeholders.put("{value}", args[3].substring(args[3].indexOf(":") + 1));
                         MessageUtil.sendCommandMessage(sender, "Reward.Wrong-Parameters.STATISTICS_CYCLE", placeholders);
                     }
                     break;
@@ -352,76 +354,77 @@ public class RewardCommand
         }
         if (args.length == 4) {
             if (config.get("Reward-Settings.Permission-Groups." + args[2]) == null) {
-                return new ArrayList();
+                return EMPTY;
             }
             if (!args[3].contains(":")) {
-                List<String> types = Arrays.stream(RewardType.values())
-                        .map(type -> type.name())
-                        .collect(Collectors.toList());
+                List<String> types = new ArrayList<>();
+                for (RewardType type : RewardType.values()) {
+                    types.add(type.name());
+                }
                 return getTabElements(args, args.length, types);
             } else if (args[3].toUpperCase().startsWith(RewardType.SPECIAL_DATES.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Dates") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
                 return getTabElements(args, args.length, config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Dates").getKeys(false).stream().map(value -> RewardType.SPECIAL_DATES.name() + ":" + value).collect(Collectors.toList()));
             } else if (args[3].toUpperCase().startsWith(RewardType.SPECIAL_RANKING.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Ranking") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
                 return getTabElements(args, args.length, config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Ranking").getKeys(false).stream().map(value -> RewardType.SPECIAL_RANKING.name() + ":" + value).collect(Collectors.toList()));
             } else if (args[3].toUpperCase().startsWith(RewardType.SPECIAL_TIMES_OF_MONTH.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times-Of-Month") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
-                List<String> values = new ArrayList();
-                config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times-Of-Month").getKeys(false).stream().forEach(value -> {
+                List<String> values = new ArrayList<>();
+                for (String value : config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times-Of-Month").getKeys(false)) {
                     if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times-Of-Month." + value + ".Valid-Months") != null) {
-                        config.getIntegerList("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times-Of-Month." + value + ".Valid-Months").stream().forEach(month -> {
+                        for (Integer month : config.getIntegerList("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times-Of-Month." + value + ".Valid-Months")) {
                             values.add(RewardType.SPECIAL_TIMES_OF_MONTH.name() + ":" + value + ":" + month);
-                        });
+                        }
                     } else {
                         values.add(RewardType.SPECIAL_TIMES_OF_MONTH.name() + ":" + value);
                     }
-                });
+                }
                 return getTabElements(args, args.length, values);
             } else if (args[3].toUpperCase().startsWith(RewardType.STATISTICS_OF_MONTH.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times-Of-Month") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
-                List<String> values = new ArrayList();
-                config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times-Of-Month").getKeys(false).stream().forEach(value -> {
+                List<String> values = new ArrayList<>();
+                for (String value : config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times-Of-Month").getKeys(false)) {
                     if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times-Of-Month." + value + ".Valid-Months") != null) {
-                        config.getIntegerList("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times-Of-Month." + value + ".Valid-Months").stream().forEach(month -> {
+                        for (Integer month : config.getIntegerList("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times-Of-Month." + value + ".Valid-Months")) {
                             values.add(RewardType.STATISTICS_OF_MONTH.name() + ":" + value + ":" + month);
-                        });
+                        }
                     } else {
                         values.add(RewardType.STATISTICS_OF_MONTH.name() + ":" + value);
                     }
-                });
+                }
                 return getTabElements(args, args.length, values);
             } else if (args[3].toUpperCase().startsWith(RewardType.SPECIAL_TIMES.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
                 return getTabElements(args, args.length, config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Times").getKeys(false).stream().map(value -> RewardType.SPECIAL_TIMES.name() + ":" + value).collect(Collectors.toList()));
             } else if (args[3].toUpperCase().startsWith(RewardType.SPECIAL_TIME_PERIODS.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Time-periods") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
                 return getTabElements(args, args.length, config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Time-periods").getKeys(false).stream().map(value -> RewardType.SPECIAL_TIME_PERIODS.name() + ":" + value).collect(Collectors.toList()));
             } else if (args[3].toUpperCase().startsWith(RewardType.SPECIAL_WEEKS.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Special-Weeks") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
                 return getTabElements(args, args.length, config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Special-Weeks").getKeys(false).stream().map(value -> RewardType.SPECIAL_WEEKS.name() + ":" + value).collect(Collectors.toList()));
             } else if (args[3].toUpperCase().startsWith(RewardType.STATISTICS.name())) {
                 if (config.get("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times") == null) {
-                    return new ArrayList();
+                    return EMPTY;
                 }
                 return getTabElements(args, args.length, config.getConfigurationSection("Reward-Settings.Permission-Groups." + args[2] + ".Statistics-Times").getKeys(false).stream().map(value -> RewardType.STATISTICS.name() + ":" + value).collect(Collectors.toList()));
             }
         }
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override
@@ -493,7 +496,7 @@ public class RewardCommand
         @Getter
         private final String configName;
         
-        private RewardType(String configName) {
+        RewardType(String configName) {
             this.configName = configName;
         }
     }

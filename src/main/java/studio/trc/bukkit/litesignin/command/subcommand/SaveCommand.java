@@ -10,6 +10,8 @@ import studio.trc.bukkit.litesignin.command.SignInSubCommandType;
 import studio.trc.bukkit.litesignin.util.MessageUtil;
 import studio.trc.bukkit.litesignin.util.PluginControl;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class SaveCommand
     implements SignInSubCommand
 {
@@ -26,7 +28,7 @@ public class SaveCommand
 
     @Override
     public List<String> tabComplete(CommandSender sender, String subCommand, String... args) {
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override

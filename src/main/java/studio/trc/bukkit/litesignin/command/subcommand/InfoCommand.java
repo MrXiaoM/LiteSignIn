@@ -14,6 +14,8 @@ import studio.trc.bukkit.litesignin.command.SignInSubCommandType;
 import studio.trc.bukkit.litesignin.util.MessageUtil;
 import studio.trc.bukkit.litesignin.queue.SignInQueue;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class InfoCommand
     implements SignInSubCommand
 {
@@ -68,7 +70,7 @@ public class InfoCommand
         if (args.length == 2) {
             return tabGetPlayersName(args, 2);
         }
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override

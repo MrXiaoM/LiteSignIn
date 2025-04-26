@@ -22,6 +22,8 @@ import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInDate;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class ClickCommand
     implements SignInSubCommand
 {
@@ -259,7 +261,7 @@ public class ClickCommand
         if (args.length == 2 || args.length == 3) {
             return tabGetPlayersName(args, args.length);
         }
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override

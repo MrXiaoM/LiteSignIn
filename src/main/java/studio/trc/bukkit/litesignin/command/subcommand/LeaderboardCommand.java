@@ -28,6 +28,8 @@ import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInDate;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class LeaderboardCommand
     implements SignInSubCommand
 {
@@ -40,8 +42,8 @@ public class LeaderboardCommand
             int page = 1;
             int numberOfSinglePage = 10;
             try {
-                numberOfSinglePage = Integer.valueOf(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
-            } catch (NumberFormatException ex) {}
+                numberOfSinglePage = Integer.parseInt(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
+            } catch (NumberFormatException ignored) {}
             final int finalPage = page;
             final int finalNumberOfSinglePage = numberOfSinglePage;
             task = () -> sendLeaderBoard(sender, today, finalPage, finalNumberOfSinglePage);
@@ -59,8 +61,8 @@ public class LeaderboardCommand
                     int page = 1;
                     int numberOfSinglePage = 10;
                     try {
-                        numberOfSinglePage = Integer.valueOf(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
-                    } catch (NumberFormatException ex) {}
+                        numberOfSinglePage = Integer.parseInt(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
+                    } catch (NumberFormatException ignored) {}
                     final int finalPage = page;
                     final int finalNumberOfSinglePage = numberOfSinglePage;
                     task = () -> sendLeaderBoard(sender, date, finalPage, finalNumberOfSinglePage);
@@ -68,8 +70,8 @@ public class LeaderboardCommand
                     int page = 1;
                     int numberOfSinglePage = 10;
                     try {
-                        numberOfSinglePage = Integer.valueOf(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
-                    } catch (NumberFormatException ex) {}
+                        numberOfSinglePage = Integer.parseInt(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
+                    } catch (NumberFormatException ignored) {}
                     final int finalPage = page;
                     final int finalNumberOfSinglePage = numberOfSinglePage;
                     task = () -> sendLeaderBoard(sender, date, finalPage, finalNumberOfSinglePage);
@@ -93,15 +95,15 @@ public class LeaderboardCommand
                     int page;
                     int numberOfSinglePage = 10;
                     try {
-                        page = Integer.valueOf(args[2]);
+                        page = Integer.parseInt(args[2]);
                     } catch (NumberFormatException ex) {
                         placeholders.put("{page}", args[2]);
                         MessageUtil.sendCommandMessage(sender, "LeaderBoard.Invalid-Number", placeholders);
                         return;
                     }
                     try {
-                        numberOfSinglePage = Integer.valueOf(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
-                    } catch (NumberFormatException ex) {}
+                        numberOfSinglePage = Integer.parseInt(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
+                    } catch (NumberFormatException ignored) {}
                     final int finalPage = page;
                     final int finalNumberOfSinglePage = numberOfSinglePage;
                     task = () -> sendLeaderBoard(sender, date, finalPage, finalNumberOfSinglePage);
@@ -109,15 +111,15 @@ public class LeaderboardCommand
                     int page;
                     int numberOfSinglePage = 10;
                     try {
-                        page = Integer.valueOf(args[2]);
+                        page = Integer.parseInt(args[2]);
                     } catch (NumberFormatException ex) {
                         placeholders.put("{page}", args[2]);
                         MessageUtil.sendCommandMessage(sender, "LeaderBoard.Invalid-Number", placeholders);
                         return;
                     }
                     try {
-                        numberOfSinglePage = Integer.valueOf(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
-                    } catch (NumberFormatException ex) {}
+                        numberOfSinglePage = Integer.parseInt(MessageUtil.getMessage("Command-Messages.LeaderBoard.Number-Of-Single-Page"));
+                    } catch (NumberFormatException ignored) {}
                     final int finalPage = page;
                     final int finalNumberOfSinglePage = numberOfSinglePage;
                     task = () -> sendLeaderBoard(sender, date, finalPage, finalNumberOfSinglePage);
@@ -142,7 +144,7 @@ public class LeaderboardCommand
 
     @Override
     public List<String> tabComplete(CommandSender sender, String subCommand, String... args) {
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override
@@ -191,11 +193,11 @@ public class LeaderboardCommand
                                         }
                                     }
                                     if (name != null) {
-                                        Map<String, String> playerName = new HashMap();
+                                        Map<String, String> playerName = new HashMap<>();
                                         playerName.put("{player}", name);
                                         BaseComponent click = new TextComponent(MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Other-Players"), playerName));
                                         ClickEvent ce = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Command"), playerName));
-                                        List<BaseComponent> hoverText = new ArrayList();
+                                        List<BaseComponent> hoverText = new ArrayList<>();
                                         int end = 0;
                                         List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Player-Show.Hover");
                                         for (String hover : array) {
@@ -216,7 +218,7 @@ public class LeaderboardCommand
                                         HoverEvent he = new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.toArray(new BaseComponent[] {}));
                                         click.setClickEvent(ce);
                                         click.setHoverEvent(he);
-                                        Map<String, BaseComponent> baseComponents = new HashMap();
+                                        Map<String, BaseComponent> baseComponents = new HashMap<>();
                                         baseComponents.put("%player%", click);
                                         Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                         placeholders.put("{player}", name);
@@ -229,7 +231,7 @@ public class LeaderboardCommand
                                         MessageUtil.sendCommandMessage(sender, "LeaderBoard.List-Format." + listFormatPath + ".Usually.Other-Players", placeholders, baseComponents);
                                     } else {
                                         Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                                        Map<String, String> uuid = new HashMap();
+                                        Map<String, String> uuid = new HashMap<>();
                                         uuid.put("{uuid}", element.getUUID().toString());
                                         placeholders.put("%player%", MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Player"), uuid));
                                         placeholders.put("{total}", String.valueOf(queue.size()));
@@ -252,23 +254,22 @@ public class LeaderboardCommand
                                 }
                             } else {
                                 for (SignInQueueElement user : userArray) {
-                                    SignInQueueElement element = user;
                                     String dateName = date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format"));
-                                    String timeName = element.getSignInDate().hasTimePeriod() ? element.getSignInDate().getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Time-Format")) : MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Time");
+                                    String timeName = user.getSignInDate().hasTimePeriod() ? user.getSignInDate().getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Time-Format")) : MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Time");
                                     if (MessageUtil.getMessage("Command-Messages.LeaderBoard.List-Format." + listFormatPath + ".Tiel-Ranking.Other-Players").toLowerCase().contains("%player%")) {
-                                        String name = element.getName() != null && !element.getName().equals("null") ? element.getName() : null;
+                                        String name = user.getName() != null && !user.getName().equals("null") ? user.getName() : null;
                                         if (name == null) {
-                                            OfflinePlayer offlineplayer = Bukkit.getOfflinePlayer(element.getUUID());
+                                            OfflinePlayer offlineplayer = Bukkit.getOfflinePlayer(user.getUUID());
                                             if (offlineplayer != null) {
                                                 name = offlineplayer.getName();
                                             }
                                         }
                                         if (name != null) {
-                                            Map<String, String> playerName = new HashMap();
+                                            Map<String, String> playerName = new HashMap<>();
                                             playerName.put("{player}", name);
                                             BaseComponent click = new TextComponent(MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Other-Players"), playerName));
                                             ClickEvent ce = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Command"), playerName));
-                                            List<BaseComponent> hoverText = new ArrayList();
+                                            List<BaseComponent> hoverText = new ArrayList<>();
                                             int end = 0;
                                             List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Player-Show.Hover");
                                             for (String hover : array) {
@@ -289,7 +290,7 @@ public class LeaderboardCommand
                                             HoverEvent he = new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.toArray(new BaseComponent[] {}));
                                             click.setClickEvent(ce);
                                             click.setHoverEvent(he);
-                                            Map<String, BaseComponent> baseComponents = new HashMap();
+                                            Map<String, BaseComponent> baseComponents = new HashMap<>();
                                             baseComponents.put("%player%", click);
                                             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                             placeholders.put("{player}", name);
@@ -302,8 +303,8 @@ public class LeaderboardCommand
                                             MessageUtil.sendMessage(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.List-Format." + listFormatPath + ".Tiel-Ranking.Other-Players"), placeholders, baseComponents);
                                         } else {
                                             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                                            Map<String, String> uuid = new HashMap();
-                                            uuid.put("{uuid}", element.getUUID().toString());
+                                            Map<String, String> uuid = new HashMap<>();
+                                            uuid.put("{uuid}", user.getUUID().toString());
                                             placeholders.put("%player%", MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Player"), uuid));
                                             placeholders.put("{total}", String.valueOf(queue.size()));
                                             placeholders.put("{date}", dateName);
@@ -331,11 +332,11 @@ public class LeaderboardCommand
                                 String timeName = queue.getElement(player.getUniqueId()).getSignInDate().hasTimePeriod() ? queue.getElement(player.getUniqueId()).getSignInDate().getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Time-Format")) : MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Time");
                                 if (MessageUtil.getMessage("Command-Messages.LeaderBoard.List-Format." + listFormatPath + ".Usually.Self").toLowerCase().contains("%player%")) {
                                     String name = player.getName();
-                                    Map<String, String> playerName = new HashMap();
+                                    Map<String, String> playerName = new HashMap<>();
                                     playerName.put("{player}", name);
                                     BaseComponent click = new TextComponent(MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Self"), playerName));
                                     ClickEvent ce = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Command"), playerName));
-                                    List<BaseComponent> hoverText = new ArrayList();
+                                    List<BaseComponent> hoverText = new ArrayList<>();
                                     int end = 0;
                                     List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Player-Show.Hover");
                                     for (String hover : array) {
@@ -356,7 +357,7 @@ public class LeaderboardCommand
                                     HoverEvent he = new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.toArray(new BaseComponent[] {}));
                                     click.setHoverEvent(he);
                                     click.setClickEvent(ce);
-                                    Map<String, BaseComponent> baseComponents = new HashMap();
+                                    Map<String, BaseComponent> baseComponents = new HashMap<>();
                                     baseComponents.put("%player%", click);
                                     Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                     placeholders.put("{player}", name);
@@ -384,11 +385,11 @@ public class LeaderboardCommand
                                         String timeName = queue.getElement(player.getUniqueId()).getSignInDate().hasTimePeriod() ? queue.getElement(player.getUniqueId()).getSignInDate().getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Time-Format")) : MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Time");
                                         if (MessageUtil.getMessage("Command-Messages.LeaderBoard.List-Format." + listFormatPath + ".Tiel-Ranking.Self").toLowerCase().contains("%player%")) {
                                             String name = player.getName();
-                                            Map<String, String> playerName = new HashMap();
+                                            Map<String, String> playerName = new HashMap<>();
                                             playerName.put("{player}", name);
                                             BaseComponent click = new TextComponent(MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Self"), playerName));
                                             ClickEvent ce = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Command"), playerName));
-                                            List<BaseComponent> hoverText = new ArrayList();
+                                            List<BaseComponent> hoverText = new ArrayList<>();
                                             int end = 0;
                                             List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Player-Show.Hover");
                                             for (String hover : array) {
@@ -409,7 +410,7 @@ public class LeaderboardCommand
                                             HoverEvent he = new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.toArray(new BaseComponent[] {}));
                                             click.setHoverEvent(he);
                                             click.setClickEvent(ce);
-                                            Map<String, BaseComponent> baseComponents = new HashMap();
+                                            Map<String, BaseComponent> baseComponents = new HashMap<>();
                                             baseComponents.put("%player%", click);
                                             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                             placeholders.put("{player}", name);
@@ -431,23 +432,22 @@ public class LeaderboardCommand
                                             MessageUtil.sendCommandMessage(sender, "LeaderBoard.List-Format." + listFormatPath + ".Tiel-Ranking.Self", placeholders);
                                         }
                                     } else {
-                                        SignInQueueElement element = user;
                                         String dateName = date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format"));
-                                        String timeName = element.getSignInDate().hasTimePeriod() ? element.getSignInDate().getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Time-Format")) : MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Time");
+                                        String timeName = user.getSignInDate().hasTimePeriod() ? user.getSignInDate().getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Time-Format")) : MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Time");
                                         if (MessageUtil.getMessage("Command-Messages.LeaderBoard.List-Format." + listFormatPath + ".Tiel-Ranking.Other-Players").toLowerCase().contains("%player%")) {
-                                            String name = element.getName() != null ? element.getName() : null;
+                                            String name = user.getName() != null ? user.getName() : null;
                                             if (name == null) {
-                                                OfflinePlayer offlineplayer = Bukkit.getOfflinePlayer(element.getUUID());
+                                                OfflinePlayer offlineplayer = Bukkit.getOfflinePlayer(user.getUUID());
                                                 if (offlineplayer != null) {
                                                     name = offlineplayer.getName();
                                                 }
                                             }
                                             if (name != null) {
-                                                Map<String, String> playerName = new HashMap();
+                                                Map<String, String> playerName = new HashMap<>();
                                                 playerName.put("{player}", name);
                                                 BaseComponent click = new TextComponent(MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Other-Players"), playerName));
                                                 ClickEvent ce = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Command"), playerName));
-                                                List<BaseComponent> hoverText = new ArrayList();
+                                                List<BaseComponent> hoverText = new ArrayList<>();
                                                 int end = 0;
                                                 List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Player-Show.Hover");
                                                 for (String hover : array) {
@@ -468,7 +468,7 @@ public class LeaderboardCommand
                                                 HoverEvent he = new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText.toArray(new BaseComponent[] {}));
                                                 click.setClickEvent(ce);
                                                 click.setHoverEvent(he);
-                                                Map<String, BaseComponent> baseComponents = new HashMap();
+                                                Map<String, BaseComponent> baseComponents = new HashMap<>();
                                                 baseComponents.put("%player%", click);
                                                 Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                                 placeholders.put("{total}", String.valueOf(queue.size()));
@@ -480,8 +480,8 @@ public class LeaderboardCommand
                                                 MessageUtil.sendMessage(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.List-Format." + listFormatPath + ".Tiel-Ranking.Other-Players"), placeholders, baseComponents);
                                             } else {
                                                 Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                                                Map<String, String> uuid = new HashMap();
-                                                uuid.put("{uuid}", element.getUUID().toString());
+                                                Map<String, String> uuid = new HashMap<>();
+                                                uuid.put("{uuid}", user.getUUID().toString());
                                                 placeholders.put("%player%", MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Player"), uuid));
                                                 placeholders.put("{total}", String.valueOf(queue.size()));
                                                 placeholders.put("{date}", dateName);
@@ -522,12 +522,11 @@ public class LeaderboardCommand
                             }
                             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                             String playerName;
+                            Map<String, String> subPlaceholders = new HashMap<>();
                             if (name != null) {
-                                Map<String, String> subPlaceholders = new HashMap();
                                 subPlaceholders.put("{player}", name);
                                 playerName = MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Other-Players"), subPlaceholders);
                             } else {
-                                Map<String, String> subPlaceholders = new HashMap();
                                 subPlaceholders.put("{uuid}", element.getUUID().toString());
                                 playerName = MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Player"), subPlaceholders);
                             }
@@ -556,12 +555,11 @@ public class LeaderboardCommand
                                 }
                                 Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                 String playerName;
+                                Map<String, String> subPlaceholders = new HashMap<>();
                                 if (name != null) {
-                                    Map<String, String> subPlaceholders = new HashMap();
                                     subPlaceholders.put("{player}", name);
                                     playerName = MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Player-Show.Text.Other-Players"), subPlaceholders);
                                 } else {
-                                    Map<String, String> subPlaceholders = new HashMap();
                                     subPlaceholders.put("{uuid}", element.getUUID().toString());
                                     playerName = MessageUtil.replacePlaceholders(sender, MessageUtil.getMessage("Command-Messages.LeaderBoard.Unknown-Player"), subPlaceholders);
                                 }
@@ -584,6 +582,8 @@ public class LeaderboardCommand
                     }
                 }
             } else {
+                String previousPage = String.valueOf(page == 1 ? maxPage : page - 1);
+                String nextPage = String.valueOf(page == maxPage ? 1 : page + 1);
                 if (!(sender instanceof Player)) {
                     Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                     placeholders.put("%previousPage%", MessageUtil.getMessage("Command-Messages.LeaderBoard.Previous-Page.Text"));
@@ -591,16 +591,16 @@ public class LeaderboardCommand
                     placeholders.put("{total}", String.valueOf(queue.size()));
                     placeholders.put("{date}", date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format")));
                     placeholders.put("{page}", String.valueOf(page));
-                    placeholders.put("{previousPage}", String.valueOf(page == 1 ? maxPage : page - 1));
-                    placeholders.put("{nextPage}", String.valueOf(page == maxPage ? 1 : page + 1));
+                    placeholders.put("{previousPage}", previousPage);
+                    placeholders.put("{nextPage}", nextPage);
                     placeholders.put("{maxPage}", String.valueOf(maxPage));
                     sender.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(sender, message, placeholders)));
                     continue;
                 }
-                Map<String, BaseComponent> baseComponents = new HashMap();
+                Map<String, BaseComponent> baseComponents = new HashMap<>();
                 if (message.toLowerCase().contains("%previouspage%")) {
                     BaseComponent click = new TextComponent(MessageUtil.getMessage("Command-Messages.LeaderBoard.Previous-Page.Text"));
-                    List<BaseComponent> hoverText = new ArrayList();
+                    List<BaseComponent> hoverText = new ArrayList<>();
                     int end = 0;
                     List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Previous-Page.Hover");
                     for (String hover : array) {
@@ -609,8 +609,8 @@ public class LeaderboardCommand
                         placeholders.put("{total}", String.valueOf(queue.size()));
                         placeholders.put("{date}", date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format")));
                         placeholders.put("{page}", String.valueOf(page));
-                        placeholders.put("{previousPage}", String.valueOf(page == 1 ? maxPage : page - 1));
-                        placeholders.put("{nextPage}", String.valueOf(page == maxPage ? 1 : page + 1));
+                        placeholders.put("{previousPage}", previousPage);
+                        placeholders.put("{nextPage}", nextPage);
                         placeholders.put("{maxPage}", String.valueOf(maxPage));
                         hoverText.add(new TextComponent(MessageUtil.toColor(MessageUtil.replacePlaceholders(sender, hover, placeholders))));
                         if (end != array.size()) {
@@ -625,7 +625,7 @@ public class LeaderboardCommand
                 }
                 if (message.toLowerCase().contains("%nextpage%")) {
                     BaseComponent click = new TextComponent(MessageUtil.getMessage("Command-Messages.LeaderBoard.Next-Page.Text"));
-                    List<BaseComponent> hoverText = new ArrayList();
+                    List<BaseComponent> hoverText = new ArrayList<>();
                     int end = 0;
                     List<String> array = MessageUtil.getMessageList("Command-Messages.LeaderBoard.Next-Page.Hover");
                     for (String hover : array) {
@@ -634,8 +634,8 @@ public class LeaderboardCommand
                         placeholders.put("{total}", String.valueOf(queue.size()));
                         placeholders.put("{date}", date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format")));
                         placeholders.put("{page}", String.valueOf(page));
-                        placeholders.put("{previousPage}", String.valueOf(page == 1 ? maxPage : page - 1));
-                        placeholders.put("{nextPage}", String.valueOf(page == maxPage ? 1 : page + 1));
+                        placeholders.put("{previousPage}", previousPage);
+                        placeholders.put("{nextPage}", nextPage);
                         placeholders.put("{maxPage}", String.valueOf(maxPage));
                         hoverText.add(new TextComponent(MessageUtil.toColor(MessageUtil.replacePlaceholders(sender, hover, placeholders))));
                         if (end != array.size()) {
@@ -653,8 +653,8 @@ public class LeaderboardCommand
                     placeholders.put("{total}", String.valueOf(queue.size()));
                     placeholders.put("{date}", date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format")));
                     placeholders.put("{page}", String.valueOf(page));
-                    placeholders.put("{previousPage}", String.valueOf(page == 1 ? maxPage : page - 1));
-                    placeholders.put("{nextPage}", String.valueOf(page == maxPage ? 1 : page + 1));
+                    placeholders.put("{previousPage}", previousPage);
+                    placeholders.put("{nextPage}", nextPage);
                     placeholders.put("{maxPage}", String.valueOf(maxPage));
                     sender.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(sender, message, placeholders)));
                 } else {
@@ -662,8 +662,8 @@ public class LeaderboardCommand
                     placeholders.put("{total}", String.valueOf(queue.size()));
                     placeholders.put("{date}", date.getName(MessageUtil.getMessage("Command-Messages.LeaderBoard.Date-Format")));
                     placeholders.put("{page}", String.valueOf(page));
-                    placeholders.put("{previousPage}", String.valueOf(page == 1 ? maxPage : page - 1));
-                    placeholders.put("{nextPage}", String.valueOf(page == maxPage ? 1 : page + 1));
+                    placeholders.put("{previousPage}", previousPage);
+                    placeholders.put("{nextPage}", nextPage);
                     placeholders.put("{maxPage}", String.valueOf(maxPage));
                     MessageUtil.sendMessage(sender, message, placeholders, baseComponents);
                 }

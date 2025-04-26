@@ -8,6 +8,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 @SuppressWarnings("MagicConstant")
@@ -282,9 +283,14 @@ public class SignInDate
         }
         return new SignInDate(today.getYear(), today.getMonth(), today.getDay(), hour, minute, second);
     }
-    
+
+    @Nullable
     public static SignInDate getInstance(String datatext) {
-        return new SignInDate(datatext);
+        try {
+            return new SignInDate(datatext);
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     public static SignInDate getInstance(int year, int month, int day, int hour, int minute, int second) {

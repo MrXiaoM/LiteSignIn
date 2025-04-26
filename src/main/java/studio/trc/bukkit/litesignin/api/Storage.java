@@ -30,150 +30,125 @@ public interface Storage
      * Give user rewards.
      * @param retroactiveDate Date of wanting to retroactively sign-in, if not, it's null.
      */
-    public void giveReward(SignInDate retroactiveDate);
+    void giveReward(SignInDate retroactiveDate);
     
     /**
      * Get the year of last sign in.
-     * @return 
      */
-    public int getYear();
+    int getYear();
     
     /**
      * Get the month of last sign in.
-     * @return 
      */
-    public int getMonth();
+    int getMonth();
     
     /**
      * Get the date of last sign in.
-     * @return 
      */
-    public int getDay();
+    int getDay();
     
     /**
      * Get the hour of last sign in.
-     * @return 
      */
-    public int getHour();
+    int getHour();
     
     /**
      * Get the minute of last sign in.
-     * @return 
      */
-    public int getMinute();
+     int getMinute();
     
     /**
      * Get the second of last sign in.
-     * @return 
      */
-    public int getSecond();
+    int getSecond();
     
     /**
      * Get the number of consecutive sign in for users.
-     * @return 
      */
-    public int getContinuousSignIn();
+    int getContinuousSignIn();
     
     /**
      * Get the number of consecutive sign in of this month for users.
-     * @return 
      */
-    public int getContinuousSignInOfMonth();
+     int getContinuousSignInOfMonth();
     
     /**
      * Get the number of retroactive cards.
-     * @return 
      */
-    public int getRetroactiveCard();
+    int getRetroactiveCard();
     
     /**
      * Get the Player's instance.
-     * @return 
      */
-    public Player getPlayer();
+    Player getPlayer();
     
     /**
      * Get the player's name in database.
-     * @return 
      */
-    public String getName();
+    String getName();
     
     /**
      * Get the player's group.
-     * @return 
      */
-    public SignInGroup getGroup();
+    SignInGroup getGroup();
     
     /**
      * Get the player's all matched groups.
-     * @return 
      */
-    public List<SignInGroup> getAllGroup();
+     List<SignInGroup> getAllGroup();
     
     /**
      * Obtaining historical records.
-     * @return 
      */
-    public List<SignInDate> getHistory();
+    List<SignInDate> getHistory();
     
     /**
      * Setting the user's sign in history.
-     * @param history 
-     * @param saveData 
      */
-    public void setHistory(List<SignInDate> history, boolean saveData);
+    void setHistory(List<SignInDate> history, boolean saveData);
     
     /**
      * Set the specified time to the user's sign in time.
      */
-    public void signIn();
+    void signIn();
     
     /**
      * Set the current time to the user's sign as historicalDate.
-     * @param historicalDate 
      */
-    public void signIn(SignInDate historicalDate);
+    void signIn(SignInDate historicalDate);
     
     /**
      * Give player a specified number of cards.
-     * @param amount 
      */
-    public void giveRetroactiveCard(int amount);
+    void giveRetroactiveCard(int amount);
     
     /**
      * Remove the specified number of cards from the player.
-     * @param amount 
      */
-    public void takeRetroactiveCard(int amount);
+    void takeRetroactiveCard(int amount);
     
     /**
      * Set the specified number of cards from the player.
      * Only the virtual prop mode is vaild.
-     * @param amount 
-     * @param saveData 
      */
-    public void setRetroactiveCard(int amount, boolean saveData);
+    void setRetroactiveCard(int amount, boolean saveData);
     
     /**
      * Set the specified time to the user's sign in time.
-     * @param date
-     * @param saveData 
      */
-    public void setSignInTime(SignInDate date, boolean saveData);
+    void setSignInTime(SignInDate date, boolean saveData);
     
     /**
      * Set the number of consecutive sign in.
-     * @param number
-     * @param saveData 
      */
-    public void setContinuousSignIn(int number, boolean saveData);
+    void setContinuousSignIn(int number, boolean saveData);
     
     /**
      * Save user data.
      */
-    public void saveData();
+    void saveData();
     
-    public static Storage getPlayer(Player player) {
+    static Storage getPlayer(Player player) {
         if (PluginControl.useMySQLStorage()) {
             return MySQLStorage.getPlayerData(player);
         } else if (PluginControl.useSQLiteStorage()) {
@@ -183,7 +158,7 @@ public interface Storage
         }
     }
     
-    public static Storage getPlayer(String playername) {
+    static Storage getPlayer(String playername) {
         if (PluginControl.useMySQLStorage()) {
             for (MySQLStorage data : MySQLStorage.cache.values()) {
                 if (data.getName().equalsIgnoreCase(playername)) {
@@ -196,7 +171,7 @@ public interface Storage
                 if (rs.next()) {
                     uuid = UUID.fromString(rs.getString("UUID"));
                 }
-            } catch (SQLException ex) {}
+            } catch (SQLException ignored) {}
             return uuid != null ? MySQLStorage.getPlayerData(uuid) : null;
         } else if (PluginControl.useSQLiteStorage()) {
             for (SQLiteStorage data : SQLiteStorage.cache.values()) {
@@ -210,14 +185,14 @@ public interface Storage
                 if (rs.next()) {
                     uuid = UUID.fromString(rs.getString("UUID"));
                 }
-            } catch (SQLException ex) {}
+            } catch (SQLException ignored) {}
             return uuid != null ? SQLiteStorage.getPlayerData(uuid) : null;
         } else {
             return YamlStorage.getPlayerData(Bukkit.getOfflinePlayer(playername).getUniqueId());
         }
     }
     
-    public static Storage getPlayer(UUID uuid) {
+    static Storage getPlayer(UUID uuid) {
         if (PluginControl.useMySQLStorage()) {
             return MySQLStorage.getPlayerData(uuid);
         } else if (PluginControl.useSQLiteStorage()) {

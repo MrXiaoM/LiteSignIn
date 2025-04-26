@@ -2,6 +2,7 @@ package studio.trc.bukkit.litesignin.command;
 
 import lombok.Getter;
 
+import org.jetbrains.annotations.Nullable;
 import studio.trc.bukkit.litesignin.command.subcommand.*;
 
 public enum SignInSubCommandType
@@ -68,13 +69,7 @@ public enum SignInSubCommandType
     @Getter
     private final String commandPermissionPath;
 
-    private SignInSubCommandType(String subCommandName, SignInSubCommand subCommand) {
-        this.subCommandName = subCommandName;
-        this.subCommand = subCommand;
-        commandPermissionPath = null;
-    }
-    
-    private SignInSubCommandType(String subCommandName, SignInSubCommand subCommand, String commandPermissionPath) {
+    SignInSubCommandType(String subCommandName, SignInSubCommand subCommand, @Nullable String commandPermissionPath) {
         this.subCommandName = subCommandName;
         this.subCommand = subCommand;
         this.commandPermissionPath = commandPermissionPath;
@@ -82,7 +77,6 @@ public enum SignInSubCommandType
 
     /**
      * @param subCommand Sub command's name.
-     * @return 
      */
     public static SignInSubCommandType getCommandType(String subCommand) {
         for (SignInSubCommandType type : values()) {

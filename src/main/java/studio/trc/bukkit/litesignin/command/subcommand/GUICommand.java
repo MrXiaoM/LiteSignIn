@@ -19,6 +19,8 @@ import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInDate;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class GUICommand
     implements SignInSubCommand
 {
@@ -76,7 +78,7 @@ public class GUICommand
                     }
                     int year;
                     try {
-                        year = Integer.valueOf(args[2]);
+                        year = Integer.parseInt(args[2]);
                     } catch (NumberFormatException ex) {
                         placeholders.put("{year}", args[2]);
                         MessageUtil.sendCommandMessage(player, "GUI.Invalid-Year", placeholders);
@@ -116,7 +118,7 @@ public class GUICommand
                 return Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
             }
         }
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override

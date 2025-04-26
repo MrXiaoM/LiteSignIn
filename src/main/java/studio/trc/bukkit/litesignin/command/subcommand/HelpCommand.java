@@ -9,6 +9,8 @@ import studio.trc.bukkit.litesignin.command.SignInSubCommand;
 import studio.trc.bukkit.litesignin.command.SignInSubCommandType;
 import studio.trc.bukkit.litesignin.util.MessageUtil;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class HelpCommand
     implements SignInSubCommand
 {
@@ -24,7 +26,7 @@ public class HelpCommand
 
     @Override
     public List<String> tabComplete(CommandSender sender, String subCommand, String... args) {
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override

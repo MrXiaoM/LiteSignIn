@@ -20,6 +20,8 @@ import studio.trc.bukkit.litesignin.util.MessageUtil;
 import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
 
+import static studio.trc.bukkit.litesignin.command.SignInCommand.EMPTY;
+
 public class RetroactiveCardCommand
     implements SignInSubCommand
 {
@@ -65,21 +67,22 @@ public class RetroactiveCardCommand
     public List<String> tabComplete(CommandSender sender, String subCommand, String... args) {
         String subCommandType = args[1];
         if (args.length <= 2) {
-            List<String> commands = Arrays.stream(SubCommandType.values())
-                    .filter(type -> SignInPluginUtils.hasCommandPermission(sender, type.getCommandPermissionPath(), false))
-                    .map(type -> type.getCommandName())
-                    .collect(Collectors.toList());
-            List<String> names = new ArrayList();
-            commands.stream().filter(command -> command.toLowerCase().startsWith(subCommandType.toLowerCase())).forEach(command -> {
-                names.add(command);
-            });
+            List<String> names = new ArrayList<>();
+            for (SubCommandType type : SubCommandType.values()) {
+                if (SignInPluginUtils.hasCommandPermission(sender, type.getCommandPermissionPath(), false)) {
+                    String command = type.getCommandName();
+                    if (command.toLowerCase().startsWith(subCommandType.toLowerCase())) {
+                        names.add(command);
+                    }
+                }
+            }
             return names;
         } else {
             if (args.length == 4) {
                 return tabGetPlayersName(args, 4);
             }
         }
-        return new ArrayList();
+        return EMPTY;
     }
 
     @Override
@@ -93,7 +96,7 @@ public class RetroactiveCardCommand
         }
         Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
         try {
-            int number = Integer.valueOf(args[2]);
+            int number = Integer.parseInt(args[2]);
             if (player != null) {
                 Storage data = Storage.getPlayer(player);
                 data.giveRetroactiveCard(number);
@@ -135,7 +138,7 @@ public class RetroactiveCardCommand
         }
         Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
         try {
-            int number = Integer.valueOf(args[2]);
+            int number = Integer.parseInt(args[2]);
             if (player != null) {
                 Storage data = Storage.getPlayer(player);
                 data.setRetroactiveCard(number, true);
@@ -177,7 +180,7 @@ public class RetroactiveCardCommand
         }
         Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
         try {
-            int number = Integer.valueOf(args[2]);
+            int number = Integer.parseInt(args[2]);
             if (player != null) {
                 Storage data = Storage.getPlayer(player);
                 data.takeRetroactiveCard(number);
@@ -234,7 +237,7 @@ public class RetroactiveCardCommand
         @Getter
         private final String commandPermissionPath;
         
-        private SubCommandType(String commandName, String commandPermissionPath) {
+        SubCommandType(String commandName, String commandPermissionPath) {
             this.commandName = commandName;
             this.commandPermissionPath = commandPermissionPath;
         }
