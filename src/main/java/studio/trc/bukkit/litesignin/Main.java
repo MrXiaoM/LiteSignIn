@@ -17,6 +17,7 @@ import studio.trc.bukkit.litesignin.event.Join;
 import studio.trc.bukkit.litesignin.nms.NMSManager;
 import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInPluginProperties;
+import studio.trc.bukkit.litesignin.util.SkullsUtil;
 import studio.trc.bukkit.litesignin.util.woodsignscript.WoodSignEvent;
 
 import org.bukkit.Bukkit;
@@ -39,6 +40,7 @@ public class Main
     @Override
     public void onEnable() {
         main = this;
+        SkullsUtil.init();
         
         SignInPluginProperties.reloadProperties();
         

@@ -21,12 +21,9 @@ import java.util.UUID;
 import studio.trc.bukkit.litesignin.api.Storage;
 import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
 import studio.trc.bukkit.litesignin.config.ConfigurationType;
-import studio.trc.bukkit.litesignin.util.MessageUtil;
+import studio.trc.bukkit.litesignin.util.*;
 import studio.trc.bukkit.litesignin.queue.SignInQueue;
 import studio.trc.bukkit.litesignin.gui.SignInGUIColumn.KeyType;
-import studio.trc.bukkit.litesignin.util.SignInDate;
-import studio.trc.bukkit.litesignin.util.PluginControl;
-import studio.trc.bukkit.litesignin.util.SignInPluginProperties;
 import studio.trc.bukkit.litesignin.nms.NMSManager;
 
 import org.bukkit.Bukkit;
@@ -755,10 +752,10 @@ public class SignInGUI
             version.startsWith("1.11") ||
             version.startsWith("1.12") || 
             version.startsWith("1.13")) return;
-        if (is.getItemMeta() == null) return;
         ItemMeta im = is.getItemMeta();
+        if (im == null) return;
         String name = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getString(configPath);
-        if (im == null || name == null) return;
+        if (name == null) return;
         try {
             im.setCustomModelData(Integer.valueOf(name));
         } catch (Exception ex) {
@@ -772,35 +769,12 @@ public class SignInGUI
     
     private static void setHeadTextures(Player player, String configPath, ItemStack is) {
         String version = Bukkit.getBukkitVersion();
-        if (version == null || version.startsWith("1.7")) return;
+        if (version.startsWith("1.7")) return;
         ItemMeta im = is.getItemMeta();
         String textures = MessageUtil.toPlaceholderAPIResult(ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getString(configPath), player);
         if (im == null || textures == null) return;
-        if (is.getItemMeta() instanceof SkullMeta) {
-            SkullMeta skull = (SkullMeta) im;
-            GameProfile profile = new GameProfile(UUID.randomUUID(), "Skull");
-            profile.getProperties().put("textures", new Property("textures", textures));
-            try {
-                Field profileField = skull.getClass().getDeclaredField("profile");
-                profileField.setAccessible(true);
-                try {
-                    profileField.set(skull, profile);
-                } catch (IllegalArgumentException ex) {
-                    Object resolvableProfile = Class.forName("net.minecraft.world.item.component.ResolvableProfile").getConstructor(GameProfile.class).newInstance(profile);
-                    profileField.set(skull, resolvableProfile);
-                }
-                profileField.setAccessible(false);
-                if (version.startsWith("1.20")) {
-                    Field serializedProfileField = skull.getClass().getDeclaredField("serializedProfile");
-                    Method writeGameProfile = Arrays.stream(NMSManager.gameProfileSerializer.getMethods()).filter(method -> method.getParameterTypes().length == 2 && method.getParameterTypes()[0].equals(NMSManager.nbtTagCompound) && method.getParameterTypes()[1].equals(profile.getClass()) && method.getReturnType().equals(NMSManager.nbtTagCompound)).findFirst().orElse(null);
-                    if (writeGameProfile != null) {
-                        serializedProfileField.setAccessible(true);
-                        serializedProfileField.set(skull, writeGameProfile.invoke(null, NMSManager.nbtTagCompound.getConstructor().newInstance(), profile));
-                        serializedProfileField.setAccessible(false);
-                    }
-                }
-            } catch (Exception e) {}
-            is.setItemMeta(skull);
+        if (im instanceof SkullMeta) {
+            is.setItemMeta(SkullsUtil.setSkullBase64(im, textures));
         }
     }
 }
