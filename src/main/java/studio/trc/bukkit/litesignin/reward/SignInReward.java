@@ -14,47 +14,20 @@ public interface SignInReward
 {
     /**
      * Give reward.
-     * @param playerData 
      */
-    public void giveReward(Storage playerData);
-    
+    void giveReward(Storage playerData);
     /**
      * Get SignInReward permission group.
-     * @return 
      */
-    public SignInGroup getGroup();
-    
+    SignInGroup getGroup();
     /**
      * Get SignInReward module
      * It is used to indicate the reward form of SignInReward.
-     * @return 
      */
-    public SignInRewardModule getModule();
-    
-    /**
-     * @return 
-     */
-    public List<String> getMessages();
-    
-    /**
-     * @return 
-     */
-    public List<String> getBroadcastMessages();
-    
-    /**
-     * @return 
-     */
-    public List<SignInRewardCommand> getCommands();
-    
-    /**
-     * @return 
-     */
-    public List<SignInSound> getSounds();
-    
-    /**
-     * Get Reward items.
-     * @param player Use for PlaceholderAPI request.
-     * @return 
-     */
-    public List<ItemStack> getRewardItems(Player player);
+    SignInRewardModule getModule();
+    List<String> getMessages();
+    List<String> getBroadcastMessages();
+    List<SignInRewardCommand> getCommands();
+    List<SignInSound> getSounds();
+    List<ItemStack> getRewardItems(Player player);
 }

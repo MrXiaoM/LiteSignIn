@@ -1,6 +1,7 @@
 package studio.trc.bukkit.litesignin.reward.command;
 
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -45,7 +46,7 @@ public class SignInRewardCommand
                         try {
                             player.performCommand(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(command_replaced, player)));
                         } catch (Throwable error) {
-                            error.printStackTrace();
+                            Main.getInstance().getLogger().log(Level.WARNING, "管理员命令执行错误 (" + player.getName() + "): " + command_replaced, error);
                         }
                         player.setOp(false);
                     }

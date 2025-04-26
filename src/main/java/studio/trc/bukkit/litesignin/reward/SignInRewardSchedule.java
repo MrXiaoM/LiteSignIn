@@ -12,7 +12,7 @@ import studio.trc.bukkit.litesignin.reward.type.SignInNormalReward;
  */
 public class SignInRewardSchedule
 {
-    private final List<SignInReward> queue = new LinkedList();
+    private final List<SignInReward> queue = new LinkedList<>();
     private final Storage playerData;
     
     public SignInRewardSchedule(Storage playerData) {
@@ -41,9 +41,11 @@ public class SignInRewardSchedule
                     break;
                 }
             }
-            for (SignInReward reward : queue) {
-                if (!retroactiveTime.isDisable(reward.getModule()) && !reward.getModule().equals(SignInRewardModule.RETROACTIVE_TIME)) {
-                    reward.giveReward(playerData);
+            if (retroactiveTime != null) {
+                for (SignInReward reward : queue) {
+                    if (!retroactiveTime.isDisable(reward.getModule()) && !reward.getModule().equals(SignInRewardModule.RETROACTIVE_TIME)) {
+                        reward.giveReward(playerData);
+                    }
                 }
             }
         } else {

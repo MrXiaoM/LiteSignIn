@@ -1,8 +1,6 @@
 package studio.trc.bukkit.litesignin.command;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +17,6 @@ import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
 import studio.trc.bukkit.litesignin.util.MessageUtil;
 import studio.trc.bukkit.litesignin.database.util.BackupUtil;
 import studio.trc.bukkit.litesignin.database.util.RollBackUtil;
-import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
 
 public class SignInCommand
@@ -30,7 +27,7 @@ public class SignInCommand
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (BackupUtil.isBackingUp()) {
+        if (BackupUtil.isBackupRunning()) {
             MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Database-Management.Backup.BackingUp");
             return true;
         }

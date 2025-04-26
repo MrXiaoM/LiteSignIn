@@ -26,7 +26,9 @@ public class SignInSound
     
     public void playSound(Player... players) {
         if (broadcast) {
-            Bukkit.getOnlinePlayers().stream().forEach(player -> player.playSound(player.getLocation(), sound, volume, pitch));
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.playSound(player.getLocation(), sound, volume, pitch);
+            }
         } else {
             for (Player player : players) {
                 player.playSound(player.getLocation(), sound, volume, pitch);

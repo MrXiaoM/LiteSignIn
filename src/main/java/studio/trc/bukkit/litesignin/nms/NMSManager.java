@@ -1,6 +1,5 @@
 package studio.trc.bukkit.litesignin.nms;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import org.bukkit.inventory.meta.ItemMeta;
 import studio.trc.bukkit.litesignin.util.CustomItem;
 
 public class NMSManager
@@ -64,7 +64,7 @@ public class NMSManager
     }
     
     public static BaseComponent[] getJsonItemStackArray(List<CustomItem> itemStackList) {
-        List<BaseComponent> text = new ArrayList();
+        List<BaseComponent> text = new ArrayList<>();
         for (int i = 0;i < itemStackList.size();i++) {
             if (itemStackList.get(i) != null && !itemStackList.get(i).getItemStack().getType().equals(Material.AIR)) {
                 text.add(getJsonItemStack(itemStackList.get(i).getItemStack(), itemStackList.get(i).getName()));
@@ -78,12 +78,13 @@ public class NMSManager
     
     public static BaseComponent getJsonItemStack(ItemStack is) {
         String text;
+        ItemMeta meta = is.getItemMeta();
         try {
-            text = is.getItemMeta().hasDisplayName() ? is.getItemMeta().getDisplayName() : (String) is.getClass().getMethod("getI18NDisplayName").invoke(is);
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            text = is.getItemMeta().hasDisplayName() ? is.getItemMeta().getDisplayName() : is.getType().toString().toLowerCase().replace("_", " ");
+            text = meta != null && meta.hasDisplayName() ? meta.getDisplayName() : (String) is.getClass().getMethod("getI18NDisplayName").invoke(is);
+        } catch (Throwable ex) {
+            text = meta != null && meta.hasDisplayName() ? meta.getDisplayName() : is.getType().toString().toLowerCase().replace("_", " ");
         }
-        if (is != null && !is.getType().equals(Material.AIR)) {
+        if (!is.getType().equals(Material.AIR)) {
             BaseComponent tc = new TextComponent(text);
             ComponentBuilder cb = new ComponentBuilder(getJsonAsNBTTagCompound(is));
             tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, cb.create()));

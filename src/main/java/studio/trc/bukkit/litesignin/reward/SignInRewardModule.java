@@ -28,7 +28,7 @@ public enum SignInRewardModule
     SPECIAL_TIME_PERIOD,
     
     /**
-     * Special weeks's reward.
+     * Special week's reward.
      */
     SPECIAL_WEEK,
     
@@ -60,5 +60,5 @@ public enum SignInRewardModule
     /**
      * Statistics time's cycle reward.
      */
-    STATISTICS_TIME_CYCLE;
+    STATISTICS_TIME_CYCLE
 }

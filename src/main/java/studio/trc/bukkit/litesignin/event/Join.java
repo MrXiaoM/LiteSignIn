@@ -16,7 +16,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import studio.trc.bukkit.litesignin.Main;
 import studio.trc.bukkit.litesignin.api.Storage;
 import studio.trc.bukkit.litesignin.config.ConfigurationType;
 import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
@@ -34,7 +33,7 @@ public class Join
 {
     @EventHandler(ignoreCancelled = true)
     public void onJoin(PlayerJoinEvent event) {
-        if (BackupUtil.isBackingUp() || RollBackUtil.isRollingback()) {
+        if (BackupUtil.isBackupRunning() || RollBackUtil.isRollingback()) {
             return;
         }
         Player player = event.getPlayer();

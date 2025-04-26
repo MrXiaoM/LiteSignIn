@@ -94,7 +94,7 @@ public class Menu
             if (menuOpening.get(player.getUniqueId()) != null) {
                 e.setCancelled(true);
                 if (e.getClickedInventory() != null && InventoryType.CHEST.equals(e.getClickedInventory().getType())) {
-                    if (BackupUtil.isBackingUp()) {
+                    if (BackupUtil.isBackupRunning()) {
                         MessageUtil.sendMessage(player, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Database-Management.Backup.BackingUp");
                         player.closeInventory();
                         return;

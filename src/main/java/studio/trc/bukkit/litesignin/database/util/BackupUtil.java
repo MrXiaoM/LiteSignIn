@@ -22,10 +22,10 @@ import studio.trc.bukkit.litesignin.util.SignInDate;
 public class BackupUtil
 {
     private static CommandSender[] backupUsers = {};
-    private static boolean backingup = false;
+    private static boolean backupRunning = false;
     
-    public static boolean isBackingUp() {
-        return backingup;
+    public static boolean isBackupRunning() {
+        return backupRunning;
     }
     
     public static Runnable backupMethod = () -> {
@@ -34,9 +34,9 @@ public class BackupUtil
             if (!ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Database-Management.Backup.Enabled")) {
                 return;
             }
-            backingup = true;
+            backupRunning = true;
             String fileName = ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getString("Database-Management.Backup.Backup-File") + ".db";
-            Map<String, String> time = new HashMap();
+            Map<String, String> time = new HashMap<>();
             time.put("{time}", SignInDate.getInstance(new Date()).getName(ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getString("Database-Management.Backup.Time-Format")));
             fileName = MessageUtil.replacePlaceholders(Bukkit.getConsoleSender(), fileName, time);
             String fileFolder = ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getString("Database-Management.Backup.Backup-Folder-Path");
@@ -63,7 +63,7 @@ public class BackupUtil
                     MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Database-Management.Backup.Successfully", placeholders);
                 }
             }
-            backingup = false;
+            backupRunning = false;
         } catch (Throwable t) {
             for (CommandSender sender : BackupUtil.backupUsers) {
                 if (sender != null) {
@@ -73,7 +73,7 @@ public class BackupUtil
                 }
             }
             t.printStackTrace();
-            backingup = false;
+            backupRunning = false;
         }
     };
     

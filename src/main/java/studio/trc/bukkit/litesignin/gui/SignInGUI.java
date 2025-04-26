@@ -1,13 +1,7 @@
 package studio.trc.bukkit.litesignin.gui;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -16,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import studio.trc.bukkit.litesignin.api.Storage;
 import studio.trc.bukkit.litesignin.config.ConfigurationUtil;
@@ -24,7 +17,6 @@ import studio.trc.bukkit.litesignin.config.ConfigurationType;
 import studio.trc.bukkit.litesignin.util.*;
 import studio.trc.bukkit.litesignin.queue.SignInQueue;
 import studio.trc.bukkit.litesignin.gui.SignInGUIColumn.KeyType;
-import studio.trc.bukkit.litesignin.nms.NMSManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -36,127 +28,139 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
+@SuppressWarnings("deprecation")
 public class SignInGUI
 {
     public static SignInInventory getGUI(Player player) {
         ConfigurationSection section = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getConfigurationSection(MessageUtil.getLanguage() + ".SignIn-GUI-Settings");
-        /**
-         * Create chest GUI
-         */
-        Inventory gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replace(player, section.getString("GUI-Name"), "{date}", new SimpleDateFormat(section.getString("Date-Format")).format(new Date()))));
-        
-        /**
-         * Elements
-         */
-        List<SignInGUIColumn> columns = new ArrayList();
-        
-        getKey(player).stream().map(items -> {
+        String formattedDate = new SimpleDateFormat(section.getString("Date-Format", "yyyy-MM-dd")).format(new Date());
+        String replacedText = replace(player, section.getString("GUI-Name"), "{date}", formattedDate);
+        String title = MessageUtil.toColor(replacedText);
+        Inventory gui = Bukkit.createInventory(null, 54, title);
+        List<SignInGUIColumn> columns = new ArrayList<>();
+
+        for (SignInGUIColumn items : getKey(player)) {
             gui.setItem(items.getKeyPostion(), items.getItemStack());
-            return items;
-        }).forEach(items -> columns.add(items));
-        
-        getOthers(player).stream().map(items -> {
+            columns.add(items);
+        }
+        for (SignInGUIColumn items : getOthers(player)) {
             gui.setItem(items.getKeyPostion(), items.getItemStack());
-            return items;
-        }).forEach(items -> columns.add(items));
-        
+            columns.add(items);
+        }
         return new SignInInventory(gui, columns);
     }
     
     public static SignInInventory getGUI(Player player, int month) {
-        /**
-         * Chest GUI
-         */
         Inventory gui;
-        
         ConfigurationSection section = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getConfigurationSection(MessageUtil.getLanguage() + ".SignIn-GUI-Settings");
-        
-        /**
-         * If month = specified month, return basic gui.
-         */
+
         Date now = new Date();
         if (month == SignInDate.getInstance(now).getMonth()) {
-            gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replace(player, section.getString("GUI-Name"), "{date}", new SimpleDateFormat(section.getString("Date-Format")).format(now))));
+            String formattedDate = new SimpleDateFormat(section.getString("Date-Format", "yyyy-MM-dd")).format(now);
+            String replacedText = replace(player, section.getString("GUI-Name"), "{date}", formattedDate);
+            gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replacedText));
         } else {
-            gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replace(player, section.getString("Specified-Month-GUI-Name"), "{month}", String.valueOf(month))));
+            String replacedText = replace(player, section.getString("Specified-Month-GUI-Name"), "{month}", String.valueOf(month));
+            gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replacedText));
         }
-        
-        /**
-         * Elements
-         */
-        List<SignInGUIColumn> columns = new ArrayList();
-        
-        getKey(player, month).stream().map(items -> {
+
+        List<SignInGUIColumn> columns = new ArrayList<>();
+        for (SignInGUIColumn items : getKey(player, month)) {
             gui.setItem(items.getKeyPostion(), items.getItemStack());
-            return items;
-        }).forEach(items -> columns.add(items));
-        
-        getOthers(player, month).stream().map(items -> {
+            columns.add(items);
+        }
+        for (SignInGUIColumn items : getOthers(player, month)) {
             gui.setItem(items.getKeyPostion(), items.getItemStack());
-            return items;
-        }).forEach((items) -> columns.add(items));
-        
+            columns.add(items);
+        }
         return new SignInInventory(gui, columns, month);
     }
     
     public static SignInInventory getGUI(Player player, int month, int year) {
-        /**
-         * Chest GUI
-         */
         Inventory gui;
         SignInDate today = SignInDate.getInstance(new Date());
         ConfigurationSection section = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getConfigurationSection(MessageUtil.getLanguage() + ".SignIn-GUI-Settings");
-        
-        /**
-         * If month = specified month and year = specified year, return basic gui.
-         */
+
         if (year == today.getYear()) {
             if (month == today.getMonth()) {
-                gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replace(player, section.getString("GUI-Name"), "{date}", new SimpleDateFormat(section.getString("Date-Format")).format(new Date()))));
+                String formattedDate = new SimpleDateFormat(section.getString("Date-Format", "yyyy-MM-dd")).format(new Date());
+                String replacedText = replace(player, section.getString("GUI-Name"), "{date}", formattedDate);
+                gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replacedText));
             } else {
-                gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replace(player, section.getString("Specified-Month-GUI-Name"), "{month}", String.valueOf(month))));
+                String replacedText = replace(player, section.getString("Specified-Month-GUI-Name"), "{month}", String.valueOf(month));
+                gui = Bukkit.createInventory(null, 54, MessageUtil.toColor(replacedText));
             }
         } else {
             Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
             placeholders.put("{month}", String.valueOf(month));
             placeholders.put("{year}", String.valueOf(year));
-            gui = Bukkit.createInventory(null, 54, MessageUtil.replacePlaceholders(player, section.getString("Specified-Year-GUI-Name"), placeholders));
+            String replaced = MessageUtil.replacePlaceholders(player, section.getString("Specified-Year-GUI-Name", ""), placeholders);
+            gui = Bukkit.createInventory(null, 54, replaced);
         }
-        
-        /**
-         * Elements
-         */
-        List<SignInGUIColumn> columns = new ArrayList();
-        
-        getKey(player, month, year).stream().map(items -> {
+
+        List<SignInGUIColumn> columns = new ArrayList<>();
+        for (SignInGUIColumn items : getKey(player, month, year)) {
             gui.setItem(items.getKeyPostion(), items.getItemStack());
-            return items;
-        }).forEach(items -> columns.add(items));
-        
-        getOthers(player, month, year).stream().map(items -> {
+            columns.add(items);
+        }
+        for (SignInGUIColumn items : getOthers(player, month, year)) {
             gui.setItem(items.getKeyPostion(), items.getItemStack());
-            return items;
-        }).forEach(items -> columns.add(items));
-        
+            columns.add(items);
+        }
         return new SignInInventory(gui, columns, month, year);
     }
-    
-    /**
-     * Return key buttons.
-     * @param player 
-     * @param month specified month.
-     * @param year specified year.
-     * @return 
-     */
+
+    public static ItemStack getItem(ConfigurationSection section, String prefix, Player player, int i, Map<String, String> placeholders) {
+        ItemStack key;
+        try {
+            if (section.get(prefix + ".Data") != null) {
+                key = new ItemStack(Material.valueOf(section.getString(prefix + ".Item", "").toUpperCase()), i + 1, (short) section.getInt(prefix + ".Data"));
+            } else {
+                key = new ItemStack(Material.valueOf(section.getString(prefix + ".Item", "").toUpperCase()), i + 1);
+            }
+        } catch (IllegalArgumentException ex) {
+            key = new ItemStack(Material.BARRIER, i + 1);
+        }
+        if (section.get(prefix + ".Head-Owner") != null) {
+            PluginControl.setHead(key, replace(player, section.getString(prefix + ".Head-Owner"), "{player}", player.getName()));
+        }
+        if (section.get(prefix + ".Amount") != null) {
+            key.setAmount(section.getInt(prefix + ".Amount"));
+        }
+        if (section.get(prefix + ".Head-Textures") != null) {
+            setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + prefix + ".Head-Textures", key);
+        }
+        if (section.get(prefix + ".Custom-Model-Data") != null) {
+            setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + prefix + ".Custom-Model-Data", key);
+        }
+        ItemMeta im = key.getItemMeta();
+        if (im != null) {
+            if (section.get(prefix + ".Lore") != null) {
+                List<String> lore = new ArrayList<>();
+                for (String loreLine : section.getStringList(prefix + ".Lore")) {
+                    lore.add(MessageUtil.replacePlaceholders(player, loreLine, placeholders));
+                }
+                im.setLore(lore);
+            }
+            if (section.get(prefix + ".Enchantment") != null) {
+                setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key." + prefix + ".Enchantment", im);
+            }
+            if (section.get(prefix + ".Hide-Enchants") != null) PluginControl.hideEnchants(im);
+            if (section.get(prefix + ".Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString(prefix + ".Display-Name"), "{day}", String.valueOf(i + 1))));
+        }
+        key.setItemMeta(im);
+        return key;
+    }
+
     public static Set<SignInGUIColumn> getKey(Player player, int month, int year) {
-        Set<SignInGUIColumn> set = new LinkedHashSet();
+        Set<SignInGUIColumn> set = new LinkedHashSet<>();
         SignInDate today = SignInDate.getInstance(new Date());
         if (today.getMonth() == month && today.getYear() == year) return getKey(player);
-        Storage playerdata = Storage.getPlayer(player);
-        String queue = String.valueOf(SignInQueue.getInstance().getRank(playerdata.getUserUUID()));
-        String continuous = String.valueOf(playerdata.getContinuousSignIn());
-        String totalNumber = String.valueOf(playerdata.getCumulativeNumber());
-        String cards = String.valueOf(playerdata.getRetroactiveCard());
+        Storage playerData = Storage.getPlayer(player);
+        String queue = String.valueOf(SignInQueue.getInstance().getRank(playerData.getUserUUID()));
+        String continuous = String.valueOf(playerData.getContinuousSignIn());
+        String totalNumber = String.valueOf(playerData.getCumulativeNumber());
+        String cards = String.valueOf(playerData.getRetroactiveCard());
         int nextPageMonth = getNextPageMonth(month);
         int nextPageYear = getNextPageYear(month, year);
         int previousPageMonth = getPreviousPageMonth(month);
@@ -168,87 +172,18 @@ public class SignInGUI
         SignInDate specifiedDate = SignInDate.getInstance(year, month, 1);
         ConfigurationSection section = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getConfigurationSection(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key");
         if (specifiedDate.compareTo(today) == -1) {
-            List<ItemStack> items = new LinkedList();
-            List<KeyType> keys = new LinkedList();
-            for (int i = 0;i < days[month - 1];i++) {
+            List<ItemStack> items = new LinkedList<>();
+            List<KeyType> keys = new LinkedList<>();
+            for (int i = 0; i < days[month-1]; i++) {
                 SignInDate historicalDate = SignInDate.getInstance(year, month, i + 1);
                 ItemStack key;
                 KeyType keyType;
-                if (playerdata.alreadySignIn(historicalDate)) {
-                    try {
-                        if (section.get("Already-SignIn.Data") != null) {
-                            key = new ItemStack(Material.valueOf(section.getString("Already-SignIn.Item").toUpperCase()), i + 1, (short) section.getInt("Already-SignIn.Data"));
-                        } else {
-                            key = new ItemStack(Material.valueOf(section.getString("Already-SignIn.Item").toUpperCase()), i + 1);
-                        }
-                    } catch (IllegalArgumentException ex) {
-                        key = new ItemStack(Material.BARRIER, i + 1);
-                    }
-                    if (section.get("Already-SignIn.Head-Owner") != null) {
-                        PluginControl.setHead(key, replace(player, section.getString("Already-SignIn.Head-Owner"), "{player}", player.getName()));
-                    }
-                    if (section.get("Already-SignIn.Amount") != null) {
-                        key.setAmount(section.getInt("Already-SignIn.Amount"));
-                    }
-                    if (section.get("Already-SignIn.Head-Textures") != null) {
-                        setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Head-Textures", key);
-                    }
-                    if (section.get("Already-SignIn.Custom-Model-Data") != null) {
-                        setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Custom-Model-Data", key);
-                    }
-                    ItemMeta im = key.getItemMeta();
-                    if (section.get("Already-SignIn.Lore") != null) {
-                        List<String> lore = new ArrayList();
-                        Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                        section.getStringList("Already-SignIn.Lore").stream().forEach(lores -> {
-                            lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                        });
-                        im.setLore(lore);
-                    }
-                    if (section.get("Already-SignIn.Enchantment") != null) {
-                        setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Enchantment", im);
-                    }
-                    if (section.get("Already-SignIn.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                    if (section.get("Already-SignIn.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Already-SignIn.Display-Name"), "{day}", String.valueOf(i + 1))));
-                    key.setItemMeta(im);
+                Map<String, String> placeholder = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
+                if (playerData.alreadySignIn(historicalDate)) {
+                    key = getItem(section, "Already-SignIn", player, i, placeholder);
                     keyType = KeyType.ALREADY_SIGNIN;
                 } else {
-                    try {
-                        if (section.get("Missed-SignIn.Data") != null) {
-                            key = new ItemStack(Material.valueOf(section.getString("Missed-SignIn.Item").toUpperCase()), i + 1, (short) section.getInt("Missed-SignIn.Data"));
-                        } else {
-                            key = new ItemStack(Material.valueOf(section.getString("Missed-SignIn.Item").toUpperCase()), i + 1);
-                        }
-                    } catch (IllegalArgumentException ex) {
-                        key = new ItemStack(Material.BARRIER, i + 1);
-                    }
-                    if (section.get("Missed-SignIn.Head-Owner") != null) {
-                        PluginControl.setHead(key, replace(player, section.getString("Missed-SignIn.Head-Owner"), "{player}", player.getName()));
-                    }
-                    if (section.get("Missed-SignIn.Amount") != null) {
-                        key.setAmount(section.getInt("Missed-SignIn.Amount"));
-                    }
-                    if (section.get("Missed-SignIn.Head-Textures") != null) {
-                        setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Missed-SignIn.Head-Textures", key);
-                    }
-                    if (section.get("Missed-SignIn.Custom-Model-Data") != null) {
-                        setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Missed-SignIn.Custom-Model-Data", key);
-                    }
-                    ItemMeta im = key.getItemMeta();
-                    if (section.get("Missed-SignIn.Lore") != null) {
-                        List<String> lore = new ArrayList();
-                        Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                        section.getStringList("Missed-SignIn.Lore").stream().forEach(lores -> {
-                            lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                        });
-                        im.setLore(lore);
-                    }
-                    if (section.get("Missed-SignIn.Enchantment") != null) {
-                        setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Missed-SignIn.Enchantment", im);
-                    }
-                    if (section.get("Missed-SignIn.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                    if (section.get("Missed-SignIn.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Missed-SignIn.Display-Name"), "{day}", String.valueOf(i + 1))));
-                    key.setItemMeta(im);
+                    key = getItem(section, "Missed-SignIn", player, i, placeholder);
                     keyType = KeyType.MISSED_SIGNIN;
                 }
                 items.add(key);
@@ -260,53 +195,18 @@ public class SignInGUI
                     try {
                         Calendar cal = Calendar.getInstance();
                         cal.set(year, month - 1, i + 1);
-                        set.add(new SignInGUIColumn(items.get(i), Integer.valueOf(slots), SignInDate.getInstance(cal.getTime()), keys.get(i)));
-                    } catch (IndexOutOfBoundsException ex) {}
+                        set.add(new SignInGUIColumn(items.get(i), Integer.parseInt(slots), SignInDate.getInstance(cal.getTime()), keys.get(i)));
+                    } catch (IndexOutOfBoundsException ignored) {}
                     i++;
                 }
             }
             return set;
         } else {
-            List<ItemStack> items = new LinkedList();
-            List<KeyType> keys = new LinkedList();
+            List<ItemStack> items = new LinkedList<>();
+            List<KeyType> keys = new LinkedList<>();
             for (int i = 0;i < days[month - 1];i++) {
-                ItemStack key;
-                try {
-                    if (section.get("Comming-Soon.Data") != null) {
-                        key = new ItemStack(Material.valueOf(section.getString("Comming-Soon.Item").toUpperCase()), i + 1, (short) section.getInt("Comming-Soon.Data"));
-                    } else {
-                        key = new ItemStack(Material.valueOf(section.getString("Comming-Soon.Item").toUpperCase()), i + 1);
-                    }
-                } catch (IllegalArgumentException ex) {
-                    key = new ItemStack(Material.BARRIER, i + 1);
-                }
-                if (section.get("Comming-Soon.Head-Owner") != null) {
-                    PluginControl.setHead(key, replace(player, section.getString("Comming-Soon.Head-Owner"), "{player}", player.getName()));
-                }
-                if (section.get("Comming-Soon.Amount") != null) {
-                    key.setAmount(section.getInt("Comming-Soon.Amount"));
-                }
-                if (section.get("Comming-Soon.Head-Textures") != null) {
-                    setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Comming-Soon.Head-Textures", key);
-                }
-                if (section.get("Comming-Soon.Custom-Model-Data") != null) {
-                    setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Comming-Soon.Custom-Model-Data", key);
-                }
-                ItemMeta im = key.getItemMeta();
-                if (section.get("Comming-Soon.Lore") != null) {
-                    List<String> lore = new ArrayList();
-                    Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, null);
-                    section.getStringList("Comming-Soon.Lore").stream().forEach(lores -> {
-                        lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                    });
-                    im.setLore(lore);
-                }
-                if (section.get("Comming-Soon.Enchantment") != null) {
-                    setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Comming-Soon.Enchantment", im);
-                }
-                if (section.get("Comming-Soon.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                if (section.get("Comming-Soon.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Comming-Soon.Display-Name"), "{day}", String.valueOf(i + 1))));
-                key.setItemMeta(im);
+                Map<String, String> placeholder = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, null);
+                ItemStack key = getItem(section, "Comming-Soon", player, i, placeholder);
                 items.add(key);
                 keys.add(KeyType.COMMING_SOON);
             }
@@ -316,8 +216,8 @@ public class SignInGUI
                     try {
                         Calendar cal = Calendar.getInstance();
                         cal.set(year, month - 1, i + 1);
-                        set.add(new SignInGUIColumn(items.get(i), Integer.valueOf(slots), SignInDate.getInstance(cal.getTime()), keys.get(i)));
-                    } catch (IndexOutOfBoundsException ex) {}
+                        set.add(new SignInGUIColumn(items.get(i), Integer.parseInt(slots), SignInDate.getInstance(cal.getTime()), keys.get(i)));
+                    } catch (IndexOutOfBoundsException ignored) {}
                     i++;
                 }
             }
@@ -327,9 +227,6 @@ public class SignInGUI
     
     /**
      * Return key buttons.
-     * @param player 
-     * @param month specified month.
-     * @return 
      */
     public static Set<SignInGUIColumn> getKey(Player player, int month) {
         SignInDate today = SignInDate.getInstance(new Date());
@@ -339,101 +236,40 @@ public class SignInGUI
     
     /**
      * Return key buttons.
-     * @param player 
-     * @return 
      */
     public static Set<SignInGUIColumn> getKey(Player player) {
-        Set<SignInGUIColumn> set = new LinkedHashSet();
-        Storage playerdata = Storage.getPlayer(player);
-        String queue = String.valueOf(SignInQueue.getInstance().getRank(playerdata.getUserUUID()));
-        String continuous = String.valueOf(playerdata.getContinuousSignIn());
-        String totalNumber = String.valueOf(playerdata.getCumulativeNumber());
-        String cards = String.valueOf(playerdata.getRetroactiveCard());
+        Set<SignInGUIColumn> set = new LinkedHashSet<>();
+        Storage playerData = Storage.getPlayer(player);
+        String queue = String.valueOf(SignInQueue.getInstance().getRank(playerData.getUserUUID()));
+        String continuous = String.valueOf(playerData.getContinuousSignIn());
+        String totalNumber = String.valueOf(playerData.getCumulativeNumber());
+        String cards = String.valueOf(playerData.getRetroactiveCard());
         String[] times = new SimpleDateFormat("yyyy-MM-dd").format(new Date()).split("-");
         ConfigurationSection section = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getConfigurationSection(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key");
-        int year = Integer.valueOf(times[0]);
+        int year = Integer.parseInt(times[0]);
         int[] days = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
         if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
             days[1] = 29;
         }
-        int month = Integer.valueOf(times[1]);
-        int day = Integer.valueOf(times[2]);
+        int month = Integer.parseInt(times[1]);
+        int day = Integer.parseInt(times[2]);
         int nextPageMonth = getNextPageMonth(month);
         int nextPageYear = getNextPageYear(month, year);
         int previousPageMonth = getPreviousPageMonth(month);
         int previousPageYear = getPreviousPageYear(month, year);
-        List<ItemStack> items = new LinkedList();
-        List<KeyType> keys = new LinkedList();
+        List<ItemStack> items = new LinkedList<>();
+        List<KeyType> keys = new LinkedList<>();
         for (int i = 0;i < days[month - 1];i++) {
             SignInDate historicalDate = SignInDate.getInstance(year, month, i + 1);
+            Map<String, String> placeholder = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
             if (i + 1 < day) {
                 ItemStack key;
                 KeyType keyType;
-                if (playerdata.alreadySignIn(historicalDate)) {
-                    try {
-                        if (section.get("Already-SignIn.Data") != null) {
-                            key = new ItemStack(Material.valueOf(section.getString("Already-SignIn.Item").toUpperCase()), i + 1, (short) section.getInt("Already-SignIn.Data"));
-                        } else {
-                            key = new ItemStack(Material.valueOf(section.getString("Already-SignIn.Item").toUpperCase()), i + 1);
-                        }
-                    } catch (IllegalArgumentException ex) {
-                        key = new ItemStack(Material.BARRIER, i + 1);
-                    }
-                    if (section.get("Already-SignIn.Head-Owner") != null) {
-                        PluginControl.setHead(key, replace(player, section.getString("Already-SignIn.Head-Owner"), "{player}", player.getName()));
-                    }
-                    if (section.get("Already-SignIn.Head-Textures") != null) {
-                        setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Head-Textures", key);
-                    }
-                    if (section.get("Already-SignIn.Custom-Model-Data") != null) {
-                        setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Custom-Model-Data", key);
-                    }
-                    ItemMeta im = key.getItemMeta();
-                    if (section.get("Already-SignIn.Lore") != null) {
-                        List<String> lore = new ArrayList();
-                        Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                        section.getStringList("Already-SignIn.Lore").stream().forEach(lores -> {
-                            lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                        });
-                        im.setLore(lore);
-                    }
-                    if (section.get("Already-SignIn.Enchantment") != null) {
-                        setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Enchantment", im);
-                    }
-                    if (section.get("Already-SignIn.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                    if (section.get("Already-SignIn.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Already-SignIn.Display-Name"), "{day}", String.valueOf(i + 1))));
-                    key.setItemMeta(im);
+                if (playerData.alreadySignIn(historicalDate)) {
+                    key = getItem(section, "Already-SignIn", player, i, placeholder);
                     keyType = KeyType.ALREADY_SIGNIN;
                 } else {
-                    if (section.get("Missed-SignIn.Data") != null) {
-                        key = new ItemStack(Material.valueOf(section.getString("Missed-SignIn.Item").toUpperCase()), i + 1, (short) section.getInt("Missed-SignIn.Data"));
-                    } else {
-                        key = new ItemStack(Material.valueOf(section.getString("Missed-SignIn.Item").toUpperCase()), i + 1);
-                    }
-                    if (section.get("Missed-SignIn.Head-Owner") != null) {
-                        PluginControl.setHead(key, replace(player, section.getString("Missed-SignIn.Head-Owner"), "{player}", player.getName()));
-                    }
-                    if (section.get("Missed-SignIn.Head-Textures") != null) {
-                        setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Missed-SignIn.Head-Textures", key);
-                    }
-                    if (section.get("Missed-SignIn.Custom-Model-Data") != null) {
-                        setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Missed-SignIn.Custom-Model-Data", key);
-                    }
-                    ItemMeta im = key.getItemMeta();
-                    if (section.get("Missed-SignIn.Lore") != null) {
-                        List<String> lore = new ArrayList();
-                        Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                        section.getStringList("Missed-SignIn.Lore").stream().forEach(lores -> {
-                            lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                        });
-                        im.setLore(lore);
-                    }
-                    if (section.get("Missed-SignIn.Enchantment") != null) {
-                        setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Missed-SignIn.Enchantment", im);
-                    }
-                    if (section.get("Missed-SignIn.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                    if (section.get("Missed-SignIn.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Missed-SignIn.Display-Name"), "{day}", String.valueOf(i + 1))));
-                    key.setItemMeta(im);
+                    key = getItem(section, "Missed-SignIn", player, i, placeholder);
                     keyType = KeyType.MISSED_SIGNIN;
                 }
                 items.add(key);
@@ -441,110 +277,17 @@ public class SignInGUI
             } else if (i + 1 == day) {
                 ItemStack key;
                 KeyType keyType;
-                if (playerdata.alreadySignIn(historicalDate)) {
-                    try {
-                        if (section.get("Already-SignIn.Data") != null) {
-                            key = new ItemStack(Material.valueOf(section.getString("Already-SignIn.Item").toUpperCase()), i + 1, (short) section.getInt("Already-SignIn.Data"));
-                        } else {
-                            key = new ItemStack(Material.valueOf(section.getString("Already-SignIn.Item").toUpperCase()), i + 1);
-                        }
-                    } catch (IllegalArgumentException ex) {
-                        key = new ItemStack(Material.BARRIER, i + 1);
-                    }
-                    if (section.get("Already-SignIn.Head-Owner") != null) {
-                        PluginControl.setHead(key, replace(player, section.getString("Already-SignIn.Head-Owner"), "{player}", player.getName()));
-                    }
-                    if (section.get("Already-SignIn.Head-Textures") != null) {
-                        setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Head-Textures", key);
-                    }
-                    if (section.get("Already-SignIn.Custom-Model-Data") != null) {
-                        setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Custom-Model-Data", key);
-                    }
-                    ItemMeta im = key.getItemMeta();
-                    if (section.get("Already-SignIn.Lore") != null)  {
-                        List<String> lore = new ArrayList();
-                        Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                        section.getStringList("Already-SignIn.Lore").stream().forEach(lores -> {
-                            lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                        });
-                        im.setLore(lore);
-                    }
-                    if (section.get("Already-SignIn.Enchantment") != null) {
-                        setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Already-SignIn.Enchantment", im);
-                    }
-                    if (section.get("Already-SignIn.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                    if (section.get("Already-SignIn.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Already-SignIn.Display-Name"), "{day}", String.valueOf(i + 1))));
-                    key.setItemMeta(im);
+                if (playerData.alreadySignIn(historicalDate)) {
+                    key = getItem(section, "Already-SignIn", player, i, placeholder);
                     keyType = KeyType.ALREADY_SIGNIN;
                 } else {
-                    if (section.get("Nothing-SignIn.Data") != null) {
-                        key = new ItemStack(Material.valueOf(section.getString("Nothing-SignIn.Item").toUpperCase()), i + 1, (short) section.getInt("Nothing-SignIn.Data"));
-                    } else {
-                        key = new ItemStack(Material.valueOf(section.getString("Nothing-SignIn.Item").toUpperCase()), i + 1);
-                    }
-                    if (section.get("Nothing-SignIn.Head-Owner") != null) {
-                        PluginControl.setHead(key, replace(player, section.getString("Nothing-SignIn.Head-Owner"), "{player}", player.getName()));
-                    }
-                    if (section.get("Nothing-SignIn.Head-Textures") != null) {
-                        setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Nothing-SignIn.Head-Textures", key);
-                    }
-                    if (section.get("Nothing-SignIn.Custom-Model-Data") != null) {
-                        setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Nothing-SignIn.Custom-Model-Data", key);
-                    }
-                    ItemMeta im = key.getItemMeta();
-                    if (section.get("Nothing-SignIn.Lore") != null) {
-                        List<String> lore = new ArrayList();
-                        Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                        section.getStringList("Nothing-SignIn.Lore").stream().forEach(lores -> {
-                            lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                        });
-                        im.setLore(lore);
-                    }
-                    if (section.get("Nothing-SignIn.Enchantment") != null) {
-                        setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Nothing-SignIn.Enchantment", im);
-                    }
-                    if (section.get("Nothing-SignIn.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                    if (section.get("Nothing-SignIn.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Nothing-SignIn.Display-Name"), "{day}", String.valueOf(i + 1))));
-                    key.setItemMeta(im);
+                    key = getItem(section, "Nothing-SignIn", player, i, placeholder);
                     keyType = KeyType.NOTHING_SIGNIN;
                 }
                 items.add(key);
                 keys.add(keyType);
             } else if (i + 1 > day) {
-                ItemStack key;
-                try {
-                    if (section.get("Comming-Soon.Data") != null) {
-                        key = new ItemStack(Material.valueOf(section.getString("Comming-Soon.Item").toUpperCase()), i + 1, (short) section.getInt("Comming-Soon.Data"));
-                    } else {
-                        key = new ItemStack(Material.valueOf(section.getString("Comming-Soon.Item").toUpperCase()), i + 1);
-                    }
-                } catch (IllegalArgumentException ex) {
-                    key = new ItemStack(Material.BARRIER, i + 1);
-                }
-                if (section.get("Comming-Soon.Head-Owner") != null) {
-                    PluginControl.setHead(key, replace(player, section.getString("Comming-Soon.Head-Owner"), "{player}", player.getName()));
-                }
-                if (section.get("Comming-Soon.Head-Textures") != null) {
-                    setHeadTextures(player, MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Comming-Soon.Head-Textures", key);
-                }
-                if (section.get("Comming-Soon.Custom-Model-Data") != null) {
-                    setCustomModelData(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Comming-Soon.Custom-Model-Data", key);
-                }
-                ItemMeta im = key.getItemMeta();
-                if (section.get("Comming-Soon.Lore") != null) {
-                    List<String> lore = new ArrayList();
-                    Map<String, String> placeholders = getPlaceholdersOfItemLore(i, continuous, queue, totalNumber, cards, nextPageMonth, nextPageYear, previousPageMonth, previousPageYear, historicalDate);
-                    section.getStringList("Comming-Soon.Lore").stream().forEach(lores -> {
-                        lore.add(MessageUtil.replacePlaceholders(player, lores, placeholders));
-                    });
-                    im.setLore(lore);
-                }
-                if (section.get("Comming-Soon.Enchantment") != null) {
-                    setEnchantments(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Key.Comming-Soon.Enchantment", im);
-                }
-                if (section.get("Comming-Soon.Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                if (section.get("Comming-Soon.Display-Name") != null) im.setDisplayName(MessageUtil.toColor(replace(player, section.getString("Comming-Soon.Display-Name"), "{day}", String.valueOf(i + 1))));
-                key.setItemMeta(im);
+                ItemStack key = getItem(section, "Comming-Soon", player, i, placeholder);
                 items.add(key);
                 keys.add(KeyType.COMMING_SOON);
             }
@@ -555,8 +298,8 @@ public class SignInGUI
                 try {
                     Calendar cal = Calendar.getInstance();
                     cal.set(year, month - 1, i + 1);
-                    set.add(new SignInGUIColumn(items.get(i), Integer.valueOf(slots), SignInDate.getInstance(cal.getTime()), keys.get(i)));
-                } catch (IndexOutOfBoundsException ex) {}
+                    set.add(new SignInGUIColumn(items.get(i), Integer.parseInt(slots), SignInDate.getInstance(cal.getTime()), keys.get(i)));
+                } catch (IndexOutOfBoundsException ignored) {}
                 i++;
             }
         }
@@ -575,11 +318,11 @@ public class SignInGUI
     
     public static Set<SignInGUIColumn> getOthers(Player player, int month, int year) {
         Set<SignInGUIColumn> set = new HashSet<>();
-        Storage playerdata = Storage.getPlayer(player);
-        String queue = String.valueOf(SignInQueue.getInstance().getRank(playerdata.getUserUUID()));
-        String continuous = String.valueOf(playerdata.getContinuousSignIn());
-        String totalNumber = String.valueOf(playerdata.getCumulativeNumber());
-        String cards = String.valueOf(playerdata.getRetroactiveCard());
+        Storage playerData = Storage.getPlayer(player);
+        String queue = String.valueOf(SignInQueue.getInstance().getRank(playerData.getUserUUID()));
+        String continuous = String.valueOf(playerData.getContinuousSignIn());
+        String totalNumber = String.valueOf(playerData.getCumulativeNumber());
+        String cards = String.valueOf(playerData.getRetroactiveCard());
         ConfigurationSection section = ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getConfigurationSection(MessageUtil.getLanguage() + ".SignIn-GUI-Settings.Others");
         int nextPageMonth = getNextPageMonth(month);
         int nextPageYear = getNextPageYear(month, year);

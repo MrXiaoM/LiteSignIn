@@ -3,6 +3,7 @@ package studio.trc.bukkit.litesignin.reward;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -12,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import studio.trc.bukkit.litesignin.Main;
 import studio.trc.bukkit.litesignin.api.Storage;
 import studio.trc.bukkit.litesignin.config.PreparedConfiguration;
 import studio.trc.bukkit.litesignin.config.ConfigurationType;
@@ -36,140 +38,151 @@ public abstract class SignInRewardUtil
                 try {
                     switch (SignInRewardTask.valueOf(taskName.toUpperCase())) {
                         case ITEMS_REWARD: {
-                            getRewardItems(player).stream().forEach(item -> {
+                            for (ItemStack item : getRewardItems(player)) {
                                 if (player.getInventory().firstEmpty() != -1) {
                                     player.getInventory().addItem(item);
                                 } else {
                                     player.getWorld().dropItem(player.getLocation(), item);
                                 }
-                            });
+                            }
                             break;
                         }
                         case COMMANDS_EXECUTION: {
-                            getCommands().stream().forEach(commands -> commands.runWithThePlayer(player));
+                            for (SignInRewardCommand commands : getCommands()) {
+                                commands.runWithThePlayer(player);
+                            }
                             break;
                         }
                         case MESSAGES_SENDING: {
-                            getMessages().stream().forEach(messages -> {
+                            for (String messages : getMessages()) {
                                 Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                 placeholders.put("{continuous}", String.valueOf(playerData.getContinuousSignIn()));
                                 placeholders.put("{queue}", queue);
                                 placeholders.put("{total-number}", String.valueOf(playerData.getCumulativeNumber()));
                                 placeholders.put("{player}", player.getName());
                                 player.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(player, messages, placeholders)));
-                            });
+                            }
                             break;
                         }
                         case BROADCAST_MESSAGES_SENDING: {
-                            getBroadcastMessages().stream().forEach(messages -> {
-                                Bukkit.getOnlinePlayers().stream().forEach(players -> {
+                            for (String messages : getBroadcastMessages()) {
+                                for (Player players : Bukkit.getOnlinePlayers()) {
                                     Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                                     placeholders.put("{continuous}", String.valueOf(playerData.getContinuousSignIn()));
                                     placeholders.put("{queue}", queue);
                                     placeholders.put("{total-number}", String.valueOf(playerData.getCumulativeNumber()));
                                     placeholders.put("{player}", player.getName());
                                     players.sendMessage(MessageUtil.toColor(MessageUtil.replacePlaceholders(player, messages, placeholders)));
-                                });
-                            });
+                                }
+                            }
                             break;
                         }
                         case PLAYSOUNDS: {
-                            getSounds().stream().forEach(sounds -> sounds.playSound(player));
+                            for (SignInSound sounds : getSounds()) {
+                                sounds.playSound(player);
+                            }
                             break;
                         }
                     }
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    Main.getInstance().getLogger().log(Level.WARNING, "给予奖励时出现异常", ex);
                 }
             }
         }
     }
     
     public List<ItemStack> getRewardItems(Player player, String configPath) {
-        List<ItemStack> list = new ArrayList();
+        List<ItemStack> list = new ArrayList<>();
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS);
-        if (config.contains(configPath)) {
-            config.getStringList(configPath).stream().map(itemData -> getItemFromItemData(player, itemData)).filter(item -> item != null).forEach(list::add);
+        for (String itemData : config.getStringList(configPath)) {
+            ItemStack item = getItemFromItemData(player, itemData);
+            if (item != null) {
+                list.add(item);
+            }
         }
         return list;
     }
     
     public List<SignInRewardCommand> getCommands(String configPath) {
-        List<SignInRewardCommand> list = new ArrayList();
-        if (ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS).contains(configPath)) {
-            ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS).getStringList(configPath).stream().forEach(commands -> {
-                if (commands.toLowerCase().startsWith("server:")) {
-                    list.add(new SignInRewardCommand(SignInRewardCommandType.SERVER, commands.substring(7)));
-                } else if (commands.toLowerCase().startsWith("op:")) {
-                    list.add(new SignInRewardCommand(SignInRewardCommandType.OP, commands.substring(3)));
-                } else {
-                    list.add(new SignInRewardCommand(SignInRewardCommandType.PLAYER, commands));
-                }
-            });
+        List<SignInRewardCommand> list = new ArrayList<>();
+        for (String commands : ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS).getStringList(configPath)) {
+            if (commands.toLowerCase().startsWith("server:")) {
+                list.add(new SignInRewardCommand(SignInRewardCommandType.SERVER, commands.substring(7)));
+            } else if (commands.toLowerCase().startsWith("op:")) {
+                list.add(new SignInRewardCommand(SignInRewardCommandType.OP, commands.substring(3)));
+            } else {
+                list.add(new SignInRewardCommand(SignInRewardCommandType.PLAYER, commands));
+            }
         }
         return list;
     }
     
     public ItemStack getItemFromItemData(Player player, String item) {
-        String[] itemdata = item.split(":");
+        String[] itemData = item.split(":");
         try {
-            ItemStack is = new ItemStack(Material.valueOf(itemdata[0].toUpperCase()));
+            ItemStack is = new ItemStack(Material.valueOf(itemData[0].toUpperCase()));
             try {
-                if (itemdata[1].contains("-")) {
-                    is.setAmount(PluginControl.getRandom(itemdata[1]));
+                if (itemData[1].contains("-")) {
+                    is.setAmount(PluginControl.getRandom(itemData[1]));
                 } else {
-                    is.setAmount(Integer.valueOf(itemdata[1]));
+                    is.setAmount(Integer.parseInt(itemData[1]));
                 }
-            } catch (NumberFormatException ex) {}
+            } catch (NumberFormatException ignored) {}
             return is;
         } catch (IllegalArgumentException e) {
             PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.CUSTOM_ITEMS);
-            if (config.contains("Manual-Settings." + itemdata[0] + ".Item")) {
+            if (config.contains("Manual-Settings." + itemData[0] + ".Item")) {
                 ItemStack is;
                 try {
-                    if (config.contains("Manual-Settings." + itemdata[0] + ".Data")) {
-                        is = new ItemStack(Material.valueOf(config.getString("Manual-Settings." + itemdata[0] + ".Item").toUpperCase()), 1, (short) ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS).getInt("Reward-Items." + itemdata[0] + ".Data"));
+                    if (config.contains("Manual-Settings." + itemData[0] + ".Data")) {
+                        is = new ItemStack(Material.valueOf(config.getString("Manual-Settings." + itemData[0] + ".Item").toUpperCase()), 1, (short) ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS).getInt("Reward-Items." + itemData[0] + ".Data"));
                     } else {
-                        is = new ItemStack(Material.valueOf(config.getString("Manual-Settings." + itemdata[0] + ".Item").toUpperCase()), 1);
+                        is = new ItemStack(Material.valueOf(config.getString("Manual-Settings." + itemData[0] + ".Item").toUpperCase()), 1);
                     }
                 } catch (IllegalArgumentException ex2) {
                     return null;
                 }
-                if (config.get("Manual-Settings." + itemdata[0] + ".Head-Owner") != null) {
+                if (config.get("Manual-Settings." + itemData[0] + ".Head-Owner") != null) {
                     Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
                     placeholders.put("{player}", player.getName());
-                    PluginControl.setHead(is, MessageUtil.replacePlaceholders(player, ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getString("Manual-Settings." + itemdata[0] + ".Head-Owner"), placeholders));
+                    PluginControl.setHead(is, MessageUtil.replacePlaceholders(player, ConfigurationUtil.getConfig(ConfigurationType.GUI_SETTINGS).getString("Manual-Settings." + itemData[0] + ".Head-Owner"), placeholders));
                 }
                 ItemMeta im = is.getItemMeta();
-                if (config.contains("Manual-Settings." + itemdata[0] + ".Lore")) {
-                    List<String> lore = new ArrayList();
-                    config.getStringList("Manual-Settings." + itemdata[0] + ".Lore").stream().forEach(lores -> lore.add(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(lores, player))));
-                    im.setLore(lore);
+                if (im != null) {
+                    if (config.contains("Manual-Settings." + itemData[0] + ".Lore")) {
+                        List<String> lore = new ArrayList<>();
+                        for (String loreLine : config.getStringList("Manual-Settings." + itemData[0] + ".Lore")) {
+                            lore.add(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(loreLine, player)));
+                        }
+                        im.setLore(lore);
+                    }
+                    if (config.contains("Manual-Settings." + itemData[0] + ".Enchantment")) {
+                        setEnchantments("Manual-Settings." + itemData[0] + ".Enchantment", im);
+                    }
+                    if (config.get("Manual-Settings." + itemData[0] + ".Hide-Enchants") != null)
+                        PluginControl.hideEnchants(im);
+                    if (config.contains("Manual-Settings." + itemData[0] + ".Display-Name"))
+                        im.setDisplayName(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(config.getString("Manual-Settings." + itemData[0] + ".Display-Name"), player)));
                 }
-                if (config.contains("Manual-Settings." + itemdata[0] + ".Enchantment")) {
-                    setEnchantments("Manual-Settings." + itemdata[0] + ".Enchantment", im);
-                }
-                if (config.get("Manual-Settings." + itemdata[0] + ".Hide-Enchants") != null) PluginControl.hideEnchants(im);
-                if (config.contains("Manual-Settings." + itemdata[0] + ".Display-Name")) im.setDisplayName(MessageUtil.toColor(MessageUtil.toPlaceholderAPIResult(config.getString("Manual-Settings." + itemdata[0] + ".Display-Name"), player)));
                 is.setItemMeta(im);
                 try {
-                    if (itemdata[1].contains("-")) {
-                        is.setAmount(PluginControl.getRandom(itemdata[1]));
+                    if (itemData[1].contains("-")) {
+                        is.setAmount(PluginControl.getRandom(itemData[1]));
                     } else {
-                        is.setAmount(Integer.valueOf(itemdata[1]));
+                        is.setAmount(Integer.parseInt(itemData[1]));
                     }
                 } catch (NumberFormatException ex) {
                     is.setAmount(1);
                 }
                 return is;
-            } else if (config.contains("Item-Collection." + itemdata[0])) {
-                ItemStack is = config.getItemStack("Item-Collection." + itemdata[0]);
+            } else if (config.contains("Item-Collection." + itemData[0])) {
+                ItemStack is = config.getItemStack("Item-Collection." + itemData[0]);
                 if (is != null) {
                     try {
-                        if (itemdata[1].contains("-")) {
-                            is.setAmount(PluginControl.getRandom(itemdata[1]));
+                        if (itemData[1].contains("-")) {
+                            is.setAmount(PluginControl.getRandom(itemData[1]));
                         } else {
-                            is.setAmount(Integer.valueOf(itemdata[1]));
+                            is.setAmount(Integer.parseInt(itemData[1]));
                         }
                     } catch (NumberFormatException ex) {
                         is.setAmount(1);
@@ -182,16 +195,16 @@ public abstract class SignInRewardUtil
     }
     
     public List<SignInSound> getSounds(String configPath) {
-        List<SignInSound> sounds = new ArrayList();
+        List<SignInSound> sounds = new ArrayList<>();
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS);
         if (config.contains(configPath)) {
-            config.getStringList(configPath).stream().forEach((value) -> {
+            for (String value : config.getStringList(configPath)) {
                 String[] args = value.split("-");
                 try {
                     Sound sound = Sound.valueOf(args[0].toUpperCase());
-                    float volume = Float.valueOf(args[1]);
-                    float pitch = Float.valueOf(args[2]);
-                    boolean broadcast = Boolean.valueOf(args[3]);
+                    float volume = Float.parseFloat(args[1]);
+                    float pitch = Float.parseFloat(args[2]);
+                    boolean broadcast = Boolean.parseBoolean(args[3]);
                     sounds.add(new SignInSound(sound, volume, pitch, broadcast));
                 } catch (IllegalArgumentException ex) {
                     Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
@@ -203,7 +216,7 @@ public abstract class SignInRewardUtil
                     placeholders.put("{path}", configPath + "." + value);
                     SignInPluginProperties.sendOperationMessage("InvalidSoundSetting", placeholders);
                 }
-            }); 
+            }
         }
         return sounds;
     }
@@ -222,7 +235,7 @@ public abstract class SignInRewardUtil
                     }
                     if (enchantName.equalsIgnoreCase(data[0])) {
                         try {
-                            im.addEnchant(enchant, Integer.valueOf(data[1]), true);
+                            im.addEnchant(enchant, Integer.parseInt(data[1]), true);
                             invalid = false;
                             break;
                         } catch (Exception ex) {

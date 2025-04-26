@@ -10,7 +10,6 @@ public abstract class SignInRewardColumn
 {
     /**
      * Whether to override the default reward.
-     * @return 
      */
     public abstract boolean overrideDefaultRewards();
 }

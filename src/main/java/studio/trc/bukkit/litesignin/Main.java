@@ -62,20 +62,13 @@ public class Main
         LiteSignInThread.getTaskThread().setRunning(false);
         SignInPluginProperties.sendOperationMessage("AsyncThreadStopped", MessageUtil.getDefaultPlaceholders());
         if (PluginControl.useMySQLStorage()) {
-            MySQLStorage.cache.values().stream().forEach(MySQLStorage::saveData);
+            MySQLStorage.cache.values().forEach(MySQLStorage::saveData);
         } else if (PluginControl.useSQLiteStorage()) {
-            SQLiteStorage.cache.values().stream().forEach(SQLiteStorage::saveData);
+            SQLiteStorage.cache.values().forEach(SQLiteStorage::saveData);
         }
         if (ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Database-Management.Backup.Auto-Backup")) {
             MessageUtil.sendMessage(getServer().getConsoleSender(), "Database-Management.Backup.Auto-Backup");
-            Thread thread = BackupUtil.startBackup(getServer().getConsoleSender());
-            while (thread.isAlive()) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            BackupUtil.startSyncBackup(getServer().getConsoleSender());
         }
         if (SQLiteEngine.getInstance() != null) {
             SQLiteEngine.getInstance().disconnect();
@@ -100,12 +93,14 @@ public class Main
     
     private void registerCommandExecutor() {
         PluginCommand command = getCommand("signin");
-        SignInCommand commandExecutor = new SignInCommand();
-        command.setExecutor(commandExecutor);
-        command.setTabCompleter(commandExecutor);
-        for (SignInSubCommandType subCommandType : SignInSubCommandType.values()) {
-            SignInCommand.getSubCommands().put(subCommandType.getSubCommandName(), subCommandType.getSubCommand());
+        if (command != null) {
+            SignInCommand commandExecutor = new SignInCommand();
+            command.setExecutor(commandExecutor);
+            command.setTabCompleter(commandExecutor);
+            for (SignInSubCommandType subCommandType : SignInSubCommandType.values()) {
+                SignInCommand.getSubCommands().put(subCommandType.getSubCommandName(), subCommandType.getSubCommand());
+            }
+            SignInPluginProperties.sendOperationMessage("PluginCommandRegistered");
         }
-        SignInPluginProperties.sendOperationMessage("PluginCommandRegistered");
     }
 }

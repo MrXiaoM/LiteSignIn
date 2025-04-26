@@ -28,7 +28,7 @@ public class LiteSignInThread
     @Setter
     private boolean running = false;
     @Getter
-    private final List<LiteSignInTask> tasks = new LinkedList();
+    private final List<LiteSignInTask> tasks = new LinkedList<>();
     
     @Getter
     private final double delay;
@@ -41,11 +41,11 @@ public class LiteSignInThread
     @Override
     public void run() {
         running = true;
-        List<LiteSignInTask> cache = new LinkedList();
+        List<LiteSignInTask> cache = new LinkedList<>();
         while (running) {
             try {
                 long usedTime = System.currentTimeMillis();
-                if (!BackupUtil.isBackingUp() && !RollBackUtil.isRollingback()) {
+                if (!BackupUtil.isBackupRunning() && !RollBackUtil.isRollingback()) {
                     synchronized (tasks) {
                         cache.clear();
                         cache.addAll(tasks);

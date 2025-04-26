@@ -1,14 +1,11 @@
 package studio.trc.bukkit.litesignin.queue;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +19,7 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import studio.trc.bukkit.litesignin.Main;
 import studio.trc.bukkit.litesignin.database.DatabaseTable;
 import studio.trc.bukkit.litesignin.util.SignInDate;
 import studio.trc.bukkit.litesignin.database.engine.MySQLEngine;
@@ -36,8 +34,8 @@ import studio.trc.bukkit.litesignin.util.PluginControl;
 public class SignInQueue
     extends ArrayList<SignInQueueElement>
 {
-    private static final Map<SignInDate, SignInQueue> cache = new HashMap();
-    private static final Map<SignInDate, Long> lastUpdateTime = new HashMap();
+    private static final Map<SignInDate, SignInQueue> cache = new HashMap<>();
+    private static final Map<SignInDate, Long> lastUpdateTime = new HashMap<>();
     
     public static SignInQueue getInstance() {
         SignInDate date = SignInDate.getInstance(new Date());
@@ -97,16 +95,14 @@ public class SignInQueue
                             if (date.equals(SignInDate.getInstance(new Date()))) {
                                 time = SignInDate.getInstance(date.getYear(), date.getMonth(), date.getDay(), rs.getInt("Hour"), rs.getInt("Minute"), rs.getInt("Second"));
                             } else {
-                                Integer hour = null, minute = null, second = null;
-                                for (String data : Arrays.asList(rs.getString("History").split(", "))) {
+                                int hour, minute, second;
+                                for (String data : rs.getString("History").split(", ")) {
                                     SignInDate targetDate = SignInDate.getInstance(data);
                                     if (date.equals(targetDate)) {
                                         if (targetDate.hasTimePeriod()) {
                                             hour = targetDate.getHour();
                                             minute = targetDate.getMinute();
                                             second = targetDate.getSecond();
-                                        }
-                                        if (hour != null && minute != null && second != null) {
                                             time = SignInDate.getInstance(date.getYear(), date.getMonth(), date.getDay(), hour, minute, second);
                                         } else {
                                             time = SignInDate.getInstance(date.getYear(), date.getMonth(), date.getDay());
@@ -117,7 +113,7 @@ public class SignInQueue
                             }
                             if (time != null) add(new SignInQueueElement(uuid, time, rs.getString("Name")));
                         } catch (Exception ex) {
-                            ex.printStackTrace();
+                            Main.getInstance().getLogger().log(Level.WARNING, "", ex);
                         }
                     }
                 }
@@ -135,16 +131,14 @@ public class SignInQueue
                             if (date.equals(SignInDate.getInstance(new Date()))) {
                                 time = SignInDate.getInstance(date.getYear(), date.getMonth(), date.getDay(), rs.getInt("Hour"), rs.getInt("Minute"), rs.getInt("Second"));
                             } else {
-                                Integer hour = null, minute = null, second = null;
-                                for (String data : Arrays.asList(rs.getString("History").split(", "))) {
+                                int hour, minute, second;
+                                for (String data : rs.getString("History").split(", ")) {
                                     SignInDate targetDate = SignInDate.getInstance(data);
                                     if (date.equals(targetDate)) {
                                         if (targetDate.hasTimePeriod()) {
                                             hour = targetDate.getHour();
                                             minute = targetDate.getMinute();
                                             second = targetDate.getSecond();
-                                        }
-                                        if (hour != null && minute != null && second != null) {
                                             time = SignInDate.getInstance(date.getYear(), date.getMonth(), date.getDay(), hour, minute, second);
                                         } else {
                                             time = SignInDate.getInstance(date.getYear(), date.getMonth(), date.getDay());
@@ -155,7 +149,7 @@ public class SignInQueue
                             }
                             if (time != null) add(new SignInQueueElement(uuid, time, rs.getString("Name")));
                         } catch (Exception ex) {
-                            ex.printStackTrace();
+                            Main.getInstance().getLogger().log(Level.WARNING, "", ex);
                         }
                     }
                 }
@@ -167,7 +161,8 @@ public class SignInQueue
                     cacheFile.createNewFile();
                 }
                 if (!date.equals(SignInDate.getInstance(new Date()))) return;
-                try (Reader reader = new InputStreamReader(new FileInputStream(cacheFile), "UTF-8")) {
+                try (InputStream fis = Files.newInputStream(cacheFile.toPath());
+                     Reader reader = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
                     yamlFile.load(reader);
                 } catch (InvalidConfigurationException ex) {
                     Logger.getLogger(SignInQueue.class.getName()).log(Level.SEVERE, null, ex);
@@ -190,13 +185,13 @@ public class SignInQueue
                                 add(new SignInQueueElement(uuid, historicalDate));
                             }
                         } catch (Exception ex) {
-                            ex.printStackTrace();
+                            Main.getInstance().getLogger().log(Level.WARNING, "", ex);
                         }
                     }
                 }
             }
         } catch (SQLException | IOException ex) {
-            ex.printStackTrace();
+            Main.getInstance().getLogger().log(Level.WARNING, "", ex);
         }
     }
     
@@ -257,7 +252,7 @@ public class SignInQueue
     }
     
     public List<SignInQueueElement> getUnknownTimesElement() {
-        List<SignInQueueElement> list = new ArrayList();
+        List<SignInQueueElement> list = new ArrayList<>();
         for (SignInQueueElement element : new ArrayList<>(this)) {
             if (!element.getSignInDate().hasTimePeriod()) {
                 list.add(element);
@@ -289,7 +284,7 @@ public class SignInQueue
     
     public List<SignInQueueElement> getRankingUser(int ranking) {
         checkUpdate();
-        List<SignInQueueElement> result = new ArrayList();
+        List<SignInQueueElement> result = new ArrayList<>();
         for (SignInQueueElement element : new ArrayList<>(this)) {
             if (getRank(element.getUUID()) == ranking) {
                 result.add(element);
@@ -308,7 +303,7 @@ public class SignInQueue
                 if (!file.exists()) {
                     file.createNewFile();
                 }
-                List<String> array = new ArrayList();
+                List<String> array = new ArrayList<>();
                 for (SignInQueueElement element : this) {
                     array.add(element.toString());
                 }

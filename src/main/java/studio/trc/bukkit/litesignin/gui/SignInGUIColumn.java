@@ -69,7 +69,7 @@ public class SignInGUIColumn
         return keyType;
     }
     
-    public static enum KeyType {
+    public enum KeyType {
         
         ALREADY_SIGNIN("Already-SignIn"),
         
@@ -81,7 +81,7 @@ public class SignInGUIColumn
         
         private final String sectionName;
         
-        private KeyType(String sectionName) {
+        KeyType(String sectionName) {
             this.sectionName = sectionName;
         }
         
