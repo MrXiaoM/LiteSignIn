@@ -262,7 +262,6 @@ public class MessageUtil
     
     public static List<TextParagraph> splitIntoParagraphs(String message, Map<String, String> placeholders) {
         List<TextParagraph> splitTexts = new LinkedList<>();
-        List<TextParagraph> result = new LinkedList<>();
         splitTexts.add(new TextParagraph(0, message.length(), message));
         for (String placeholder : placeholders.keySet()) {
             if (placeholder == null) continue;
@@ -290,10 +289,10 @@ public class MessageUtil
                     newArray.add(textParagraphs);
                 }
             }
-            result.clear();
-            result.addAll(newArray);
+            splitTexts.clear();
+            splitTexts.addAll(newArray);
         }
-        return result;
+        return splitTexts;
     }
     
     /**
@@ -310,7 +309,6 @@ public class MessageUtil
      */
     public static List<TextParagraph> splitIntoComponentParagraphs(String message, Map<String, BaseComponent> baseComponents) {
         List<TextParagraph> splitTexts = new LinkedList<>();
-        List<TextParagraph> result = new LinkedList<>();
         splitTexts.add(new TextParagraph(0, message.length(), new TextComponent(message)));
         for (String placeholder : baseComponents.keySet()) {
             if (placeholder == null) continue;
@@ -338,10 +336,10 @@ public class MessageUtil
                     newArray.add(textParagraphs);
                 }
             }
-            result.clear();
-            result.addAll(newArray);
+            splitTexts.clear();
+            splitTexts.addAll(newArray);
         }
-        return result;
+        return splitTexts;
     }
     
     public static String escape(String text) {
