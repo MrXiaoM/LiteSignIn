@@ -212,15 +212,7 @@ public class PluginControl
     public static boolean autoSignIn() {
         return ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Join-Event.Auto-SignIn");
     }
-    
-    public static boolean enableUpdater() {
-        return ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Updater");
-    }
-    
-    public static boolean enableMetrics() {
-        return ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Metrics");
-    }
-    
+
     public static boolean enableSignScript() {
         return ConfigurationUtil.getConfig(ConfigurationType.CONFIG).getBoolean("Wood-Signs-Script");
     }

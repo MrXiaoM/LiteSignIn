@@ -15,8 +15,6 @@ import studio.trc.bukkit.litesignin.event.Menu;
 import studio.trc.bukkit.litesignin.event.Quit;
 import studio.trc.bukkit.litesignin.event.Join;
 import studio.trc.bukkit.litesignin.nms.NMSManager;
-import studio.trc.bukkit.litesignin.util.Updater;
-import studio.trc.bukkit.litesignin.util.metrics.Metrics;
 import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInPluginProperties;
 import studio.trc.bukkit.litesignin.util.woodsignscript.WoodSignEvent;
@@ -37,7 +35,6 @@ public class Main
      * Main instance
      */
     private static Main main;
-    private static Metrics metrics;
     
     @Override
     public void onEnable() {
@@ -56,18 +53,6 @@ public class Main
         PluginControl.reload();
         NMSManager.reloadNMS();
         SignInPluginProperties.sendOperationMessage("PluginEnabledSuccessfully", MessageUtil.getDefaultPlaceholders());
-        
-        //It will run after the server is started.
-        PluginControl.runBukkitTask(() -> {
-            if (PluginControl.enableUpdater()) {
-                Updater.checkUpdate();
-            }
-        }, 0);
-        
-        //Metrics
-        if (PluginControl.enableMetrics()) {
-            metrics = new Metrics(main, 11849);
-        }
     }
     
     @Override
@@ -101,11 +86,7 @@ public class Main
     public static Main getInstance() {
         return main;
     }
-    
-    public static Metrics getMetrics() {
-        return metrics;
-    }
-    
+
     private void registerEvent() {
         PluginManager pm = Bukkit.getPluginManager();
         pm.registerEvents(new Join(), Main.getInstance());

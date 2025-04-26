@@ -21,7 +21,6 @@ import studio.trc.bukkit.litesignin.database.util.BackupUtil;
 import studio.trc.bukkit.litesignin.database.util.RollBackUtil;
 import studio.trc.bukkit.litesignin.util.PluginControl;
 import studio.trc.bukkit.litesignin.util.SignInPluginUtils;
-import studio.trc.bukkit.litesignin.util.Updater;
 
 public class SignInCommand
     implements CommandExecutor, TabCompleter
@@ -31,7 +30,6 @@ public class SignInCommand
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        checkUpdate();
         if (BackupUtil.isBackingUp()) {
             MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Database-Management.Backup.BackingUp");
             return true;
@@ -68,17 +66,7 @@ public class SignInCommand
         SignInSubCommand command = subCommands.get(subCommand);
         if (SignInPluginUtils.hasCommandPermission(sender, command.getCommandType().getCommandPermissionPath(), true)) command.execute(sender, subCommand, args);
     }
-    
-    private void checkUpdate() {
-        if (PluginControl.enableUpdater()) {
-            String now = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-            String checkUpdateTime = new SimpleDateFormat("yyyy-MM-dd").format(Updater.getTimeOfLastCheckUpdate());
-            if (!now.equals(checkUpdateTime)) {
-                Updater.checkUpdate();
-            }
-        }
-    }
-    
+
     private List<String> getCommands(CommandSender sender) {
         List<String> commands = new ArrayList();
         subCommands.values().stream().filter(command -> SignInPluginUtils.hasCommandPermission(sender, command.getCommandType().getCommandPermissionPath(), false)).forEach(command -> {
