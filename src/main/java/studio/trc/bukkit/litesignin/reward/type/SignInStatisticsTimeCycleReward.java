@@ -82,8 +82,11 @@ public class SignInStatisticsTimeCycleReward
         PreparedConfiguration config = ConfigurationUtil.getConfig(ConfigurationType.REWARD_SETTINGS);
         if (config.contains("Reward-Settings.Permission-Groups." + group.getGroupName() + ".Statistics-Times-Cycle")) {
             for (String number : config.getConfigurationSection("Reward-Settings.Permission-Groups." + group.getGroupName() + ".Statistics-Times-Cycle").getKeys(false)) {
-                if (SignInPluginUtils.isInteger(number) && time % Integer.parseInt(number) == 0) {
-                    return number;
+                if (SignInPluginUtils.isInteger(number)) {
+                    int cycle = Integer.parseInt(number);
+                    if (cycle > 0 && time % cycle == 0) {
+                        return number;
+                    }
                 }
             }
         }
